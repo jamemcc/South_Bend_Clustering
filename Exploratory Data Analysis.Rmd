@@ -1,15 +1,33 @@
+---
+title: "Exploratory Data Analysis"
+author: "Joe Kosteck"
+date: "February 13, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Exploratory Data Analysis
+
+```{r}
 library(tidycensus)
 library(tidyverse)
 library(ggmap)
 library(viridis)
 library(leaflet)
+library(ZillowR)
+library(rgdal)
+```
 
-tidycensus::census_api_key("aca156af3668f91e83aa2ef537451d708acf4838", install = T)
-
+```{r}
 #5-year American Community Survey 2015
 #Info Here: https://walkerke.github.io/tidycensus/
 acs2017Variables <- load_variables(2017, "acs5", cache = TRUE)
+```
 
+```{r}
 censusVars <- c(
   totalPopulation = "B01003_001",
   rentPortion = "B25072_001",
@@ -64,7 +82,19 @@ stJoesBlockGroup <- get_acs(
 
 stJoesTract <- sf::st_transform(stJoesTract, 4326)
 stJoesBlockGroup <- sf::st_transform(stJoesBlockGroup, 4326)
+```
 
+```{r}
+zillowNeighborhoods <- readOGR(dsn = "C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources",
+                               layer = "ZillowNeighborhoods-IN",
+                               stringsAsFactors = F)
+```
+
+```{r}
+stJoesZillow <- zillowNeighborhoods[zillowNeighborhoods$County == "Saint Joseph", ]
+````
+
+```{r}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = stJoesTract,
@@ -81,7 +111,14 @@ leaflet() %>%
               fill = FALSE,
               popup = ~NAME,
               group = "Census Block Group") %>%
+  addPolygons(data = stJoesZillow,
+              color = "red",
+              opacity = .6,
+              weight = 2,
+              fill = FALSE,
+              group = "Zillow") %>%
   addLayersControl(
-    overlayGroups = c("Census Tract", "Census Block Group"),
+    baseGroups = c("Census Tract", "Census Block Group", "Zillow"),
     options = layersControlOptions(collapsed = FALSE)
   )
+```
