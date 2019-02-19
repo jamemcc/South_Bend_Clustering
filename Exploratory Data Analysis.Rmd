@@ -46,10 +46,11 @@ censusVars <- c(
   `50% Owner Occ Housing Val` = "B25077_001",
   `75% Owner Occ Housing Val` = "B25078_001",
   `Med Owner Costs-Mortgage` = "B25088_002",
-  `Med Owner Costs-No Mortgage` = "B25088_002",
+  `Med Owner Costs-No Mortgage` = "B25088_003",
   `Med Costs/Income%-Mortgage` = "B25092_002",
   `Med Costs/Income%-No Mortgage` = "B25092_003",
-  `Med Monthly Housing Costs` = "B25105_001"
+  `Med Monthly Housing Costs` = "B25105_001",
+  `Med Family Income` = "B19113_001"
 )
 
 stJoesTract <- get_acs(
@@ -128,6 +129,7 @@ leaflet() %>%
 populationPal <- colorNumeric("Blues", stJoesTract$`Total PopulationE`)
 totalHousingPal <- colorNumeric("Blues", stJoesTract$`Total Housing UnitsE`)
 totalRentalUnitsPal <- colorNumeric("Blues", stJoesTract$`Total Renter-Occupied UnitsE`)
+incomePal <- colorNumeric("Blues", stJoesTract$`Med Family IncomeE`)
 housingCostPal <- colorNumeric("Blues", stJoesTract$`Med Monthly Housing CostsE`)
 rentIncomePal <- colorNumeric("Blues", stJoesTract$`Med Rent/Income%E`)
 
@@ -137,6 +139,8 @@ mapPopup <- paste0("<b>",
                    stJoesTract$`Total PopulationE`,
                    "<br>Total Housing Units: ",
                    stJoesTract$`Total Housing UnitsE`,
+                   "<br> Median Family Income: $",
+                   stJoesTract$`Med Family IncomeE`,
                    "<br>Total Rental Units: ",
                    stJoesTract$`Total Renter-Occupied UnitsE`,
                    "<br>Median Monthly Housing Costs: $",
@@ -168,6 +172,17 @@ leaflet() %>%
             pal = totalHousingPal,
             values = stJoesTract$`Total Housing UnitsE`,
             group = "Total Housing Units") %>%
+  addPolygons(data = stJoesTract,
+              color = ~incomePal(`Med Family IncomeE`),
+              opacity = .6,
+              weight = 2,
+              popup = mapPopup,
+              group = "Median Family Income") %>%
+  addLegend(title = "Family Income",
+            position = "bottomleft",
+            pal = incomePal,
+            values = stJoesTract$`Med Family IncomeE`,
+            group = "Median Family Income") %>%
   addPolygons(data = stJoesTract,
               color = ~totalRentalUnitsPal(`Total Renter-Occupied UnitsE`),
               opacity = .6,
@@ -202,15 +217,37 @@ leaflet() %>%
             values = stJoesTract$`Med Rent/Income%E`,
             group = "Median Rent/Income") %>%
   addLayersControl(
-    overlayGroups = c("Total Population", "Total Housing Units", "Total Rental Units",
+    overlayGroups = c("Total Population", "Total Housing Units", "Median Family Income", "Total Rental Units",
                       "Median Housing Costs", "Median Rent/Income"),
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
-  hideGroup(c("Total Housing Units", "Total Rental Units", "Median Housing Costs",
+  hideGroup(c("Total Housing Units", "Median Family Income", "Total Rental Units", "Median Housing Costs",
               "Median Rent/Income"))
+
 ```
 
-#Zillow Time Series Data
+```{r}
+mortgageCosts <- stJoesTract %>%
+  select(-geometry) %>%
+  as.tibble() %>%
+  select(NAME, `Med Owner Costs-MortgageE`, `Med Owner Costs-No MortgageE`) %>%
+  gather(key = "Mortgage Status", value = "Cost", `Med Owner Costs-MortgageE`:`Med Owner Costs-No MortgageE`) %>%
+  mutate(`Mortgage Status` = ifelse(`Mortgage Status` == "Med Owner Costs-MortgageE", "Mortgage", "No Mortgage"))
+```
+
+```{r}
+ggplot(
+  data = mortgageCosts,
+  aes(x = `Mortgage Status`, y = Cost)
+) + geom_boxplot() + labs(x = "Mortgage Status",
+                          title = "Monthly Home Ownership Costs") +
+   scale_y_continuous(labels = dollar_format())
+```
+```{r}
+
+```
+
+##Zillow Time Series Data
 ```{r, message=FALSE}
 neighborhoodRent <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/Neighborhood Rent Prices-Zillow.csv",
                              stringsAsFactors = F) %>%
@@ -290,4 +327,42 @@ ggplot(
 ) + geom_point() +
   labs(x = "Date", y = "Homes",
        title = "Homes Sold Over Time in South Bend")
+```
+
+```{r}
+bottomTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/City/City_Zhvi_BottomTier.csv",
+         stringsAsFactors = F) %>%
+  filter(State == "IN") %>%
+  filter(Metro == "South Bend-Mishawaka")
+
+middleTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/City/City_Zhvi_MiddleTier.csv",
+         stringsAsFactors = F) %>%
+  filter(State == "IN") %>%
+  filter(Metro == "South Bend-Mishawaka")
+
+topTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/City/City_Zhvi_TopTier.csv",
+         stringsAsFactors = F) %>%
+  filter(State == "IN") %>%
+  filter(Metro == "South Bend-Mishawaka")
+```
+
+```{r}
+bottomZillow <- bottomTier %>%
+  gather(key = DateString,
+         value = "Zillow Housing Value Index",
+         -c(RegionID, RegionName, State, Metro, CountyName, SizeRank))
+
+tidyBottomZillow <- bottomZillow %>%
+  mutate(DateString = str_sub(DateString, start = 2)) %>%
+  mutate(Date = as.Date(paste0(DateString, ".1"), "%Y.%m.%d") + months(1) - days(1))
+```
+
+```{r}
+ggplot(
+  data = na.omit(tidyBottomZillow),
+  aes(x = Date, y = `Zillow Housing Value Index`, color = RegionName)
+) + geom_point() + scale_y_continuous(labels = dollar_format()) +
+  labs(x = "Date", y = "Zillow Housing Value Index",
+       title = "Bottom Tier Housing Prices\nOver Time in South Bend Area",
+       color = "City")
 ```
