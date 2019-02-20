@@ -1,7 +1,7 @@
 ---
 title: "Exploratory Data Analysis"
-author: "Joe Kosteck"
-date: "February 13, 2019"
+author: "Joe Kosteck, Ashley Klesmit, Dan Malee, Patrick McCullough"
+date: "February 20, 2019"
 output: html_document
 ---
 
@@ -10,8 +10,19 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 #Exploratory Data Analysis
+  This document serves to explore some attributes of interest in the data that we have collected thus far. Here, we will show the distribution of several attributes and their relationship to each other. The purpose of this exploration is for us to understand the main characteristics of the data, so that we have an intuitive sense of with what our group is working. We may also discover issues with the data, such as missingness or outliers that may have to be taken into consideration when conducting analysis.
+  
+There are two main data sources included in this analysis:
 
-```{r, warning=FALSE, message=FALSE}
+* Census Bureau^1^
+    + Specifically, the 2013-2017 American Community Survey^2^
+    + This data set contains over 25,000 attributes, including detailed population and housing data
+    + Data is available at varying granularities, including county, city, census tract, and block group
+* Zillow Research^3^
+    + Contains detailed time series data for housing values and rental prices
+    + Data available at varying granularities, although some data at smaller geography levels is missing for South Bend
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
 library(tidycensus)
 library(tidyverse)
 library(ggmap)
@@ -23,13 +34,16 @@ library(lubridate)
 library(scales)
 ```
 
-```{r}
+```{r, echo=FALSE}
 #5-year American Community Survey 2015
 #Info Here: https://walkerke.github.io/tidycensus/
 acs2017Variables <- load_variables(2017, "acs5", cache = TRUE)
 ```
 
-```{r, eval=FALSE}
+###A Quick Note
+While the vast majority of the code used to generate this analysis is excluded, below we have included our calls to the retrieve the Census Bureau. The main purpose this is included is for transparency. Additionally, if one examines the listing of the 25,000+ available variables from the census data, they will see it is broken into sections according to topic. Including the variable names as they are shown in the data will allow users to quickly search for similar variables if they are so inclined.
+```{r, warning=FALSE, message=FALSE, eval=FALSE}
+rm(acs2017Variables)
 censusVars <- c(
   `Total Population` = "B01003_001",
   `Total Housing Units` = "B25001_001",
@@ -50,7 +64,14 @@ censusVars <- c(
   `Med Costs/Income%-Mortgage` = "B25092_002",
   `Med Costs/Income%-No Mortgage` = "B25092_003",
   `Med Monthly Housing Costs` = "B25105_001",
-  `Med Family Income` = "B19113_001"
+  `Med Family Income` = "B19113_001",
+  `Med Rent-No Bedrooms` = "B25031_002",
+  `Med Rent-1 Bedroom` = "B25031_003",
+  `Med Rent-2 Bedrooms` = "B25031_004",
+  `Med Rent-3 Bedrooms` = "B25031_005",
+  `Med Rent-4 Bedrooms` = "B25031_006",
+  `Med Rent-5+ Bedrooms` = "B25031_007",
+  `Med Rent` = "B25064_001"
 )
 
 stJoesTract <- get_acs(
@@ -76,56 +97,72 @@ stJoesTract <- sf::st_transform(stJoesTract, 4326)
 stJoesBlockGroup <- sf::st_transform(stJoesBlockGroup, 4326)
 ```
 
-```{r, eval=FALSE}
+```{r, eval=FALSE, echo=FALSE}
 zillowNeighborhoods <- readOGR(dsn = "C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources",
                                layer = "ZillowNeighborhoods-IN",
                                stringsAsFactors = F)
 ```
 
-```{r, eval=FALSE}
+```{r, eval=FALSE, echo=FALSE}
 stJoesZillow <- zillowNeighborhoods[zillowNeighborhoods$County == "Saint Joseph", ]
 ````
 
-```{r, eval=FALSE}
+```{r, eval=FALSE, echo=FALSE}
 save.image("EDA Data.RData")
 ```
 
-```{r}
+```{r, echo=FALSE}
 load("EDA Data.RData")
 ```
 
 ##Boundaries
-```{r}
+As stated above, both the Census Bureau and Zillow data is available at different geography sizes. Below, the boundaries for these different geometries is shown. When clicked, the name of that geometric area will appear. 
+```{r, echo=FALSE}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = stJoesTract,
               color = "black",
               opacity = .6,
               weight = 2,
-              fill = FALSE,
               popup = ~NAME,
               group = "Census Tract") %>%
   addPolygons(data = stJoesBlockGroup,
               color = "blue",
               opacity = .6,
               weight = 2,
-              fill = FALSE,
               popup = ~NAME,
               group = "Census Block Group") %>%
   addPolygons(data = stJoesZillow,
               color = "red",
               opacity = .6,
               weight = 2,
-              fill = FALSE,
-              group = "Zillow") %>%
+              popup = ~Name,
+              group = "Zillow Neighborhoods") %>%
   addLayersControl(
-    baseGroups = c("Census Tract", "Census Block Group", "Zillow"),
+    baseGroups = c("Census Tract", "Census Block Group", "Zillow Neighborhoods"),
     options = layersControlOptions(collapsed = FALSE)
   )
 ```
 
-##Census Data Explorer
-```{r}
+##Census Data
+This exploratory analysis will focus on the census tract data, as the block group data can be overwhelming to visualize.
+
+There are 75 distinct census tracts. Below is the quantile distribution of each attribute in the census tract data. 
+```{r, echo=FALSE}
+stJoesTractDist <- stJoesTract %>%
+  select(ends_with('E', ignore.case = F)) %>%
+  as.tibble() %>%
+  select(-c(NAME, geometry))
+
+colnames(stJoesTractDist) <- str_sub(colnames(stJoesTractDist), end = -2)
+
+summary(stJoesTractDist)
+
+rm(stJoesTractDist)
+```
+
+Next, several of the attributes are visualized geographically. The checkboxes can be used toggle which attribute the viewer would like to explore. Additionally, when a boundary is clicked, the values for that area will be displayed.
+```{r, echo=FALSE}
 populationPal <- colorNumeric("Blues", stJoesTract$`Total PopulationE`)
 totalHousingPal <- colorNumeric("Blues", stJoesTract$`Total Housing UnitsE`)
 totalRentalUnitsPal <- colorNumeric("Blues", stJoesTract$`Total Renter-Occupied UnitsE`)
@@ -152,8 +189,7 @@ leaflet() %>%
   addTiles() %>%
   addPolygons(data = stJoesTract,
               color = ~populationPal(`Total PopulationE`),
-              opacity = .6,
-              weight = 2,
+              weight = 3,
               popup = mapPopup,
               group = "Total Population") %>%
   addLegend(title = "Population",
@@ -163,8 +199,7 @@ leaflet() %>%
             group = "Total Population") %>%
   addPolygons(data = stJoesTract,
               color = ~totalHousingPal(`Total Housing UnitsE`),
-              opacity = .6,
-              weight = 2,
+              weight = 3,
               popup = mapPopup,
               group = "Total Housing Units") %>%
   addLegend(title = "Housing Units",
@@ -174,8 +209,8 @@ leaflet() %>%
             group = "Total Housing Units") %>%
   addPolygons(data = stJoesTract,
               color = ~incomePal(`Med Family IncomeE`),
-              opacity = .6,
-              weight = 2,
+              #opacity = .6,
+              weight = 3,
               popup = mapPopup,
               group = "Median Family Income") %>%
   addLegend(title = "Family Income",
@@ -185,8 +220,8 @@ leaflet() %>%
             group = "Median Family Income") %>%
   addPolygons(data = stJoesTract,
               color = ~totalRentalUnitsPal(`Total Renter-Occupied UnitsE`),
-              opacity = .6,
-              weight = 2,
+              #opacity = .6,
+              weight = 3,
               popup = mapPopup,
               group = "Total Rental Units") %>%
   addLegend(title = "Rental Units",
@@ -196,8 +231,8 @@ leaflet() %>%
             group = "Total Rental Units") %>%
   addPolygons(data = stJoesTract,
               color = ~housingCostPal(`Med Monthly Housing CostsE`),
-              opacity = .6,
-              weight = 2,
+              #opacity = .6,
+              weight = 3,
               popup = mapPopup,
               group = "Median Housing Costs") %>%
   addLegend(title = "Housing Costs",
@@ -207,8 +242,8 @@ leaflet() %>%
             group = "Median Housing Costs") %>%
   addPolygons(data = stJoesTract,
               color = ~rentIncomePal(`Med Rent/Income%E`),
-              opacity = .6,
-              weight = 2,
+              #opacity = .6,
+              weight = 3,
               popup = mapPopup,
               group = "Median Rent/Income") %>%
   addLegend(title = "Rent/Income",
@@ -226,7 +261,23 @@ leaflet() %>%
 
 ```
 
-```{r}
+Below, we can see the relationship between the median rent price and median home value. Each dot is colored by the population in that area.
+```{r, echo=FALSE}
+ggplot(
+  data = stJoesTract,
+  aes(x = `Med RentE`, y = `50% Owner Occ Housing ValE`, color = `Total PopulationE`)
+) + geom_point() + scale_y_continuous(labels = dollar_format()) +
+  scale_x_continuous(labels = dollar_format()) +
+  labs(x = "Median Rent",
+       y = "Median Home Value",
+       title = "Median Home Value vs Rent in South Bend",
+       color = "Population") +
+  scale_color_gradient2() +
+  theme_classic()
+```
+
+Next, we can see boxplots with the monthly home ownership costs for owners with and without a mortgage.
+```{r, echo=FALSE}
 mortgageCosts <- stJoesTract %>%
   select(-geometry) %>%
   as.tibble() %>%
@@ -235,101 +286,170 @@ mortgageCosts <- stJoesTract %>%
   mutate(`Mortgage Status` = ifelse(`Mortgage Status` == "Med Owner Costs-MortgageE", "Mortgage", "No Mortgage"))
 ```
 
-```{r}
+```{r, echo=FALSE}
 ggplot(
   data = mortgageCosts,
   aes(x = `Mortgage Status`, y = Cost)
 ) + geom_boxplot() + labs(x = "Mortgage Status",
                           title = "Monthly Home Ownership Costs") +
    scale_y_continuous(labels = dollar_format())
+rm(mortgageCosts)
 ```
-```{r}
 
+Lastly, we can see boxplots of rental costs versus the number of bedrooms.
+```{r, echo=FALSE}
+rentBedrooms <- stJoesTract %>%
+  as.tibble() %>%
+  select(contains("Med Rent")) %>%
+  select(ends_with("E", ignore.case = F)) %>%
+  select(-`Med Rent/Income%E`) %>%
+  gather(key = varName, value = Rent) %>%
+  na.omit() %>%
+  mutate(Bedrooms = ifelse(str_detect(varName, "No Bedrooms"), 0, NA)) %>%
+  mutate(Bedrooms = ifelse(str_detect(varName, "1 Bedroom"), 1, Bedrooms)) %>%
+  mutate(Bedrooms = ifelse(str_detect(varName, "2 Bedrooms"), 2, Bedrooms)) %>%
+  mutate(Bedrooms = ifelse(str_detect(varName, "3 Bedrooms"), 3, Bedrooms)) %>%
+  mutate(Bedrooms = ifelse(str_detect(varName, "4 Bedrooms"), 4, Bedrooms)) %>%
+  mutate(Bedrooms = ifelse(str_detect(varName, "5+ Bedrooms"), 5, Bedrooms)) %>%
+  mutate(Bedrooms = factor(Bedrooms))
+
+ggplot(
+  data = rentBedrooms,
+  aes(x = Bedrooms, y = Rent)
+) + geom_boxplot() +
+  scale_y_continuous(labels = dollar_format()) +
+  labs(title = "Rent Prices vs Bedrooms")
+
+rm(rentBedrooms)
 ```
 
 ##Zillow Time Series Data
-```{r, message=FALSE}
+Next, we'll look at time series data from Zillow.
+```{r, message=FALSE, echo=FALSE}
 neighborhoodRent <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/Neighborhood Rent Prices-Zillow.csv",
                              stringsAsFactors = F) %>%
   filter(State == "IN") %>%
   filter(CountyName == "Saint Joseph County")
 ```
 
-```{r}
+```{r, echo=FALSE}
 longRentZillow <- neighborhoodRent %>%
   gather(key = DateString,
          value = "ZRI",
          -c(RegionID, RegionName, City, State, Metro, CountyName, SizeRank))
 
+rm(neighborhoodRent)
+
 tidyRentZillow <- longRentZillow %>%
   mutate(DateString = str_sub(DateString, start = 2)) %>%
   mutate(Date = as.Date(paste0(DateString, ".1"), "%Y.%m.%d") + months(1) - days(1))
+
+rm(longRentZillow)
 ```
 
-```{r}
+The first plot shows how rent prices have changed over time in each of the South Bend neighborhoods that Zillow recognizes. This plot, however, is quite busy.
+
+```{r, echo=FALSE}
 ggplot(
   data = tidyRentZillow,
   aes(x = Date, y = ZRI, color = RegionName)
-) + geom_point() + scale_y_continuous(labels = dollar_format()) +
+) + geom_line(size = 1) + scale_y_continuous(labels = dollar_format()) +
+  guides(color = guide_legend(ncol=2)) +
+  theme(legend.text = element_text(size = 8)) +
   labs(x = "Date", y = "Zillow Rent Index",
-       title = "Rent Over Time in South Bend Neighborhoods")
+       title = "Rent Over Time in South Bend Neighborhoods",
+       color = "Neighborhood",
+       subtitle = "2010 - 2018")
+```
+This plot displays similar information in a more aesthetically pleasing manner. Each dot represents a data point in the time series. The relative width of a given line shows how much that neighborhood's rent has changed since 2010.
+```{r, echo=FALSE}
+ggplot(
+  data = tidyRentZillow %>%
+    mutate(Month = factor(lubridate::month(Date))), 
+  aes(y = fct_rev(RegionName), x = ZRI)) +
+  labs(title = "Zillow | South Bend County Rent Prices",
+       subtitle = "2010 - 2018", 
+       x = "", y = "", 
+       colour = "#E0E0E0") +
+  geom_point(shape = 20, alpha = 0.6, size = 5, aes(color = Month)) +
+  scale_color_discrete(l = 45, h = c(30, 330)) +
+  theme(axis.ticks.y = element_blank(),
+        plot.title = element_text(size = 15, face = c("bold","italic")),
+        axis.text.x = element_text(size = 9),
+        axis.title.x = element_text(size = 10),
+        axis.title.y = element_text(size = 10),
+        legend.position = "none",
+        plot.subtitle = element_text(size = 10),
+        plot.background = element_rect(fill = "white"), # background color
+        panel.grid.major.y = element_line(color = "#E0E0E0"), # horizontal line color
+        panel.background = element_rect(fill = "white")) +
+  scale_x_continuous(breaks = waiver(), labels = dollar_format()) #sets # of labels on x axis
 ```
 
-```{r}
+```{r, echo=FALSE}
 homeValueIndex <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/Zillow Home Value Index - All Homes.csv",
                            stringsAsFactors = F) %>%
   filter(State == "IN") %>%
   filter(CountyName == "Saint Joseph County")
 ```
 
-```{r}
+```{r, echo=FALSE}
 longValueZillow <- homeValueIndex %>%
   gather(key = DateString,
          value = "ZHVI",
          -c(RegionID, RegionName, City, State, Metro, CountyName, SizeRank))
+rm(homeValueIndex)
 
 tidyValueZillow <- longValueZillow %>%
   mutate(DateString = str_sub(DateString, start = 2)) %>%
   mutate(Date = as.Date(paste0(DateString, ".1"), "%Y.%m.%d") + months(1) - days(1))
+rm(longValueZillow)
 ```
-
-```{r}
+The next plot shows how home prices for select neighborhoods have changed over time. Unfortunately, there is a gap Zillow's data here. Zillow did not have any other neighborhoods' data available in this set.
+```{r, echo=FALSE, warning=FALSE}
 ggplot(
   data = tidyValueZillow,
   aes(x = Date, y = ZHVI, color = RegionName)
-) + geom_point() + scale_y_continuous(labels = dollar_format()) +
+) + geom_line(size = 1) + scale_y_continuous(labels = dollar_format()) +
   labs(x = "Date", y = "Zillow Home Value Index",
-       title = "Housing Prices Over Time in South Bend Neighborhoods")
+       title = "Home Values Over Time in South Bend Neighborhoods",
+       subtitle = "1996 - 2018")
 ```
 
-```{r}
+```{r, echo=FALSE}
 homeSales <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/Sale_Counts_Seas_Adj_City.csv",
                            stringsAsFactors = F) %>%
   filter(StateName == "Indiana") %>%
   filter(RegionName == "South Bend")
 ```
 
-```{r}
+```{r, echo=FALSE}
 longSalesZillow <- homeSales %>%
   gather(key = DateString,
          value = "Homes Sold",
          -c(RegionID, RegionName, StateName, SizeRank))
 
+rm(homeSales)
+
 tidySalesZillow <- longSalesZillow %>%
   mutate(DateString = str_sub(DateString, start = 2)) %>%
   mutate(Date = as.Date(paste0(DateString, ".1"), "%Y.%m.%d") + months(1) - days(1))
+
+rm(longSalesZillow)
 ```
 
-```{r}
+Next, we see the number of homes sold in South Bend each month from March 2008 through January 2019.
+```{r, echo=FALSE}
 ggplot(
   data = na.omit(tidySalesZillow),
   aes(x = Date, y = `Homes Sold`)
-) + geom_point() +
+) + geom_line(size = 1) +
   labs(x = "Date", y = "Homes",
-       title = "Homes Sold Over Time in South Bend")
+       title = "Homes Sold Each Month in South Bend",
+       subtitle = "Mar 2008 - Jan 2019")
 ```
 
-```{r}
+```{r, echo=FALSE}
 bottomTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/City/City_Zhvi_BottomTier.csv",
          stringsAsFactors = F) %>%
   filter(State == "IN") %>%
@@ -346,23 +466,40 @@ topTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data S
   filter(Metro == "South Bend-Mishawaka")
 ```
 
-```{r}
+```{r, echo=FALSE}
 bottomZillow <- bottomTier %>%
   gather(key = DateString,
          value = "Zillow Housing Value Index",
          -c(RegionID, RegionName, State, Metro, CountyName, SizeRank))
 
+rm(bottomTier)
+
 tidyBottomZillow <- bottomZillow %>%
   mutate(DateString = str_sub(DateString, start = 2)) %>%
   mutate(Date = as.Date(paste0(DateString, ".1"), "%Y.%m.%d") + months(1) - days(1))
+
+rm(bottomZillow)
 ```
 
-```{r}
+Lastly, Zillow breaking city-level housing data into three distinct tiers: bottom, middle, and top. The top and middle tier data sets do not contain information about South Bend and limited data about other cities in the region. Thus, this comparison will be done with the "bottom tier" time series. It is unclear how Zillow separates these cities in tiers or even what the meaning behind each tier could be.
+```{r, echo=FALSE}
 ggplot(
   data = na.omit(tidyBottomZillow),
   aes(x = Date, y = `Zillow Housing Value Index`, color = RegionName)
-) + geom_point() + scale_y_continuous(labels = dollar_format()) +
+) + geom_line(size = 1) + scale_y_continuous(labels = dollar_format()) +
   labs(x = "Date", y = "Zillow Housing Value Index",
-       title = "Bottom Tier Housing Prices\nOver Time in South Bend Area",
+       title = "Bottom Tier Housing Values\nOver Time in South Bend Area",
        color = "City")
 ```
+
+##Other Data Sources
+Other data sources that we are looking to explore:
+* National Historical GIS^4^ - an organization that creates time series from census data
+* St. Joseph County Assessor Property Sales^5^ - public records of properties sold in the county
+
+###Reference Links
+1. https://www.census.gov/
+2. https://www.census.gov/programs-surveys/acs/news/data-releases.html?#
+3. https://www.zillow.com/research/data/
+4. https://www.nhgis.org/
+5. http://in-stjoseph-assessor.governmax.com/propertymax/agency/in-stjoseph-assessor/in-stjoseph_homepage.asp?sid=AEDF4B31EBD341F9B1E982AB51B0A7B5
