@@ -26,10 +26,18 @@ censusVars <- c(
   `50% Owner Occ Housing Val` = "B25077_001",
   `75% Owner Occ Housing Val` = "B25078_001",
   `Med Owner Costs-Mortgage` = "B25088_002",
-  `Med Owner Costs-No Mortgage` = "B25088_002",
+  `Med Owner Costs-No Mortgage` = "B25088_003",
   `Med Costs/Income%-Mortgage` = "B25092_002",
   `Med Costs/Income%-No Mortgage` = "B25092_003",
-  `Med Monthly Housing Costs` = "B25105_001"
+  `Med Monthly Housing Costs` = "B25105_001",
+  `Med Family Income` = "B19113_001",
+  `Med Rent-No Bedrooms` = "B25031_002",
+  `Med Rent-1 Bedroom` = "B25031_003",
+  `Med Rent-2 Bedrooms` = "B25031_004",
+  `Med Rent-3 Bedrooms` = "B25031_005",
+  `Med Rent-4 Bedrooms` = "B25031_006",
+  `Med Rent-5+ Bedrooms` = "B25031_007",
+  `Med Rent` = "B25064_001"
 )
 
 stJoesTract <- get_acs(
