@@ -86,12 +86,15 @@ censusVars <- c(
   agg_income_deficit_no_husband = "B17011_005"
 )
 
-load_variables(2017, "acs5", cache = TRUE)
-
 acs2017Variables <- load_variables(2017, "acs5", cache = TRUE)
 
 pulled_vars <- data.frame(censusVars, stringsAsFactors = F) %>%
   inner_join(acs2017Variables, by = c("censusVars" = "name"))
+
+pulled_vars$variable_name <- names(censusVars)
+
+pulled_vars <- pulled_vars %>%
+  select(variable_name, everything())
 
 write.csv(pulled_vars, "Pulled_Variables.csv", row.names = F)
 
@@ -113,6 +116,8 @@ stJoesBlockGroup <- get_acs(
   output = "wide",
   geometry = FALSE
 )
+
+save(stJoesTract, stJoesBlockGroup, file = "total_census_data.RData")
 
 write.csv(stJoesTract, "St_Joes_Tract_Data.csv", row.names = F)
 write.csv(stJoesBlockGroup, "St_Joes_Block_Group_Data.csv", row.names = F)
