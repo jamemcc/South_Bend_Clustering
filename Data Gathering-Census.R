@@ -11,7 +11,7 @@ tidycensus::census_api_key("aca156af3668f91e83aa2ef537451d708acf4838", install =
 acs2017Variables <- load_variables(2017, "acs5", cache = TRUE)
 
 censusVars <- c(
-  `Total Population` = "B01003_001",
+  total_population = "B01003_001",
   `Total Housing Units` = "B25001_001",
   `Total Occupied Housing Units` = "B25002_002",
   `Total Vacant Housing Units` = "B25002_003",

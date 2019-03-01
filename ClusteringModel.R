@@ -31,7 +31,6 @@ censusVars <- c(
   `Med Rent-5+ Bedrooms` = "B25031_007",
   `Med Rent` = "B25064_001"
 )
-
 #tidycensus::census_api_key("aca156af3668f91e83aa2ef537451d708acf4838", install = T)
 
 stJoesBlockGroup <- get_acs(
@@ -40,7 +39,7 @@ stJoesBlockGroup <- get_acs(
   state = "IN",
   county = "St. Joseph County",
   output = "wide",
-  geometry = TRUE
+  geometry = F
 )
 
 #Split NAME into separate columns
