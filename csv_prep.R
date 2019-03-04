@@ -148,5 +148,5 @@ stJoesBlockGroupCSV <- stJoesBlockGroup %>%
 
 colnames(stJoesBlockGroupCSV)[5:76] <- names(censusVars)
 
-write.csv(stJoesTract, "St_Joes_Tract_Data.csv", row.names = F)
-write.csv(stJoesBlockGroup, "St_Joes_Block_Group_Data.csv", row.names = F)
+write.csv(stJoesTractCSV, "St_Joes_Tract_Data.csv", row.names = F)
+write.csv(stJoesBlockGroupCSV, "St_Joes_Block_Group_Data.csv", row.names = F)
