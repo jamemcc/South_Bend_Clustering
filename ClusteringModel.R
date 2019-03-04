@@ -71,7 +71,7 @@ unscaled_centers_tr <- center_info_tr
 for (i in 1:ncol(center_info_tr)) {
   name_of_column <- colnames(center_info_tr)[i]
   
-  unscaled_centers_tr[, name_of_column] <- center_info_tr[, name_of_column] * scaled_scale[name_of_column] + scaled_center[name_of_column]
+  unscaled_centers_tr[, name_of_column] <- center_info_tr[, name_of_column] * scaled_scale_tr[name_of_column] + scaled_center_tr[name_of_column]
 }
 
 scaled_scale_bg <- attr(scaled_bg$total_populationE, 'scaled:scale')
@@ -81,7 +81,7 @@ unscaled_centers_bg <- center_info_bg
 for (i in 1:ncol(center_info_bg)) {
   name_of_column <- colnames(center_info_bg)[i]
   
-  unscaled_centers_bg[, name_of_column] <- center_info_bg[, name_of_column] * scaled_scale[name_of_column] + scaled_center[name_of_column]
+  unscaled_centers_bg[, name_of_column] <- center_info_bg[, name_of_column] * scaled_scale_bg[name_of_column] + scaled_center_bg[name_of_column]
 }
 
 load("census_shapefiles.RData")
@@ -98,7 +98,7 @@ leaflet() %>%
               color = ~clusterPal_bg(Profile),
               opacity = 1) %>%
   addLegend(pal = clusterPal_bg,
-            values = block_group_map_data$Profile)
+            values = block_group_map_data_bg$Profile)
 
 
 block_group_map_data_tr <- tractShapes %>%
@@ -113,7 +113,7 @@ leaflet() %>%
               color = ~clusterPal_tr(Profile),
               opacity = 1) %>%
   addLegend(pal = clusterPal_tr,
-            values = block_group_map_data$Profile)
+            values = block_group_map_data_tr$Profile)
 
 
 
