@@ -3,6 +3,7 @@ setwd("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project")
 
 library(dplyr)
 library(tidycensus)
+library(stringr)
 
 load("EDA Data.RData")
 
@@ -36,6 +37,7 @@ censusVars <- c(
   med_cost_over_income_no_mortg = "B25092_003",
   med_hous_cost = "B25105_001",
   med_fam_income = "B19113_001",
+  med_non_fam_income = "B19202_001",
   med_rent_0_bed = "B25031_002",
   med_rent_1_bed = "B25031_003",
   med_rent_2_bed = "B25031_004",
@@ -56,7 +58,7 @@ censusVars <- c(
   tot_households = "B11001_001",
   family_households = "B11001_002",
   family_married_households = "B11001_003",
-  family_other_households = "B11001_003",
+  family_other_households = "B11001_004",
   non_family_households = "B11001_007",
   non_family_households_alone = "B11001_008",
   non_family_households_not_alone = "B11001_009",
@@ -83,7 +85,10 @@ censusVars <- c(
   agg_income_deficit_married = "B17011_002",
   agg_income_deficit_nonmarried = "B17011_003",
   agg_income_deficit_no_wife = "B17011_004",
-  agg_income_deficit_no_husband = "B17011_005"
+  agg_income_deficit_no_husband = "B17011_005",
+  median_household_income = "B25119_001",
+  median_hh_income_own = "B25119_002",
+  median_hh_income_rent = "B25119_003"
 )
 
 acs2017Variables <- load_variables(2017, "acs5", cache = TRUE)
@@ -117,7 +122,31 @@ stJoesBlockGroup <- get_acs(
   geometry = FALSE
 )
 
-save(stJoesTract, stJoesBlockGroup, file = "total_census_data.RData")
+#Split NAME into separate columns
+stJoesBlockGroup$BlockGroup <- apply(stJoesBlockGroup[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][1]})
+stJoesBlockGroup$CensusTract <- apply(stJoesBlockGroup[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][2]})
+stJoesBlockGroup$County <- apply(stJoesBlockGroup[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][3]})
+stJoesBlockGroup$State <- apply(stJoesBlockGroup[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][4]})
+
+#Split NAME into separate columns
+stJoesTract$CensusTract <- apply(stJoesTract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][1]})
+stJoesTract$County <- apply(stJoesTract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][2]})
+stJoesTract$State <- apply(stJoesTract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][3]})
+
+
+save(stJoesTract, stJoesBlockGroup, file = "census_data.RData")
+
+stJoesTractCSV <- stJoesTract %>%
+  select(CensusTract, County, State, everything()) %>%
+  select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
+
+colnames(stJoesTractCSV)[4:75] <- names(censusVars)
+
+stJoesBlockGroupCSV <- stJoesBlockGroup %>%
+  select(BlockGroup, CensusTract, County, State, everything()) %>%
+  select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
+
+colnames(stJoesBlockGroupCSV)[5:76] <- names(censusVars)
 
 write.csv(stJoesTract, "St_Joes_Tract_Data.csv", row.names = F)
 write.csv(stJoesBlockGroup, "St_Joes_Block_Group_Data.csv", row.names = F)
