@@ -21,6 +21,7 @@ tract_nas <- sapply(minus_margins_tr, function(x){sum(is.na(x))})
 bg_nas <- sapply(minus_margins_bg, function(x){sum(is.na(x))})
 
 bg_nas[bg_nas > 0]
+tract_nas[tract_nas > 0]
 
 #Filter columns with an NA's
 filtered_bg <- minus_margins_bg[, bg_nas == 0]
