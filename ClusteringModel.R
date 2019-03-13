@@ -2,6 +2,8 @@ library(tidycensus)
 library(dplyr)
 library(stringr)
 library(leaflet)
+library(mice)
+library(MissMech)
 
 setwd("~/GitHub/DS-Now-Final-Project")
 
@@ -17,53 +19,75 @@ minus_margins_bg <- stJoesBlockGroup %>%
   select(-ends_with('M', ignore.case = F))
 
 #Find the number of missing values for each dataset
-tract_nas <- sapply(minus_margins_tr, function(x){sum(is.na(x))})
+tr_nas <- sapply(minus_margins_tr, function(x){sum(is.na(x))})
 bg_nas <- sapply(minus_margins_bg, function(x){sum(is.na(x))})
 
-bg_nas[bg_nas > 0]
-tract_nas[tract_nas > 0]
+#Missing data will be imputed for variables with less that 10% missing
+missing_data_cutoff_bg <- round(nrow(stJoesBlockGroup) * .1, 0)
+missing_data_cutoff_tr <- round(nrow(stJoesTract) * .1, 0)
 
-#Filter columns with an NA's
-filtered_bg <- minus_margins_bg[, bg_nas == 0]
+#Find which variables will be kept after imputation
+bg_vars <- names(bg_nas[bg_nas < missing_data_cutoff_bg])
+tr_vars <- names(tr_nas[tr_nas < missing_data_cutoff_tr])
 
-#Filter columns with an NA's
-filtered_tr <- minus_margins_tr[, tract_nas == 0]
+#Also eliminate vars with only one value
+bg_unique <- sapply(minus_margins_bg, function(x){length(unique(x))})
+tr_unique <- sapply(minus_margins_tr, function(x){length(unique(x))})
 
-#Scale values for clustering
-scaled_bg <- filtered_bg %>%
-  select_if(is.numeric) %>%
-  scale() %>%
-  as_tibble()
+#Filter columns with less than required NA's or 1 unique value
+filtered_bg <- minus_margins_bg[, bg_nas < missing_data_cutoff_bg & bg_unique > 1]
 
-scaled_tract <- filtered_tr %>%
-  select_if(is.numeric) %>%
-  scale() %>%
-  as_tibble()
+#For the tracts, limit to what is in the block groups
+filtered_tr <- minus_margins_tr[, colnames(minus_margins_tr) %in% colnames(filtered_bg)]
+
+#Impute missing data
+imputed_data_bg <- mice(select_if(filtered_bg, is.numeric),
+                        m = 10,
+                        maxit = 20,
+                        pred = quickpred(select_if(filtered_bg, is.numeric),
+                                         minpuc = .2,
+                                         mincor = .01), 
+                        print = FALSE,
+                        seed = 300)
+
+plot(imputed_data_bg, layout = c(2, 1))
+
+imputed_data_tr <- mice(select_if(filtered_tr, is.numeric),
+                        m = 10,
+                        maxit = 20,
+                        pred = quickpred(select_if(filtered_tr, is.numeric),
+                                         minpuc = .2,
+                                         mincor = .01), 
+                        print = FALSE,
+                        seed = 1942)
+
+plot(imputed_data_tr, layout = c(2, 1))
+
+#Preform PCA
+pca_bg <- prcomp(x = complete(imputed_data_bg, 1),
+                 rank. = 35,
+                 center = TRUE,
+                 scale. = TRUE)
+
+summary(pca_bg)
 
 num_centers <- seq(from = 2, to = 15, by = 1)
 tot_withinss_bg <- rep(0, length(num_centers))
-tot_withinss_tr <- rep(0, length(num_centers))
 
 for (i in 1:length(num_centers)) {
-  kmeans_model_bg <- kmeans(scaled_bg, num_centers[i])
+  kmeans_model_bg <- kmeans(pca_bg$x, num_centers[i])
   
   tot_withinss_bg[i] <- kmeans_model_bg$tot.withinss
-  
-  kmeans_model_tr <- kmeans(scaled_tract, num_centers[i])
-  
-  tot_withinss_tr[i] <- kmeans_model_tr$tot.withinss
 }
 
-plot(num_centers, tot_withinss_tr)
 plot(num_centers, tot_withinss_bg)
 
-kmeans_five_bg <- kmeans(scaled_bg, 5)
+kmeans_five_bg <- kmeans(pca_bg$x, 5)
 center_info_bg <- data.frame(kmeans_five_bg$centers)
 kmeans_five_bg$size
 
-kmeans_five_tr <- kmeans(scaled_tract, 5)
-center_info_tr <- data.frame(kmeans_five_tr$centers)
-kmeans_five_tr$size
+t(pca_bg$rotation) %*% as.matrix(center_info_bg)
+
 
 scaled_scale_tr <- attr(scaled_tract$total_populationE, 'scaled:scale')
 scaled_center_tr <- attr(scaled_tract$total_populationE, 'scaled:center')
@@ -135,3 +159,5 @@ for (i in 1:length(numeric_col_names)) {
                                       allow.cartesian = FALSE,
                                       KeepD2Vars = FALSE)
 }
+
+save.image("clusteringWork.RData")

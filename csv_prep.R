@@ -88,10 +88,76 @@ censusVars <- c(
   agg_income_deficit_no_husband = "B17011_005",
   median_household_income = "B25119_001",
   median_hh_income_own = "B25119_002",
-  median_hh_income_rent = "B25119_003"
+  median_hh_income_rent = "B25119_003",
+  no_schooling_completed = "B15003_002",
+  nursery_school = "B15003_003",
+  kindergarten = "B15003_004",
+  first_grade = "B15003_005",
+  second_grade = "B15003_006",
+  third_grade = "B15003_007",
+  fourth_grade = "B15003_008",
+  fifth_grade = "B15003_009",
+  sixth_grade = "B15003_010",
+  seventh_grade = "B15003_011",
+  eigth_grade = "B15003_012",
+  ninth_grade = "B15003_013",
+  tenth_grade = "B15003_014",
+  eleventh_grade = "B15003_015",
+  twelfth_grade_no_diploma = "B15003_016",
+  regular_high_school_diploma = "B15003_017",
+  ged_or_alternative_credential = "B15003_018",
+  some_college_less_than_1_year = "B15003_019",
+  some_college_1_or_more_years_no_degree = "B15003_020",
+  associates_degree = "B15003_021",
+  bachelors_degree = "B15003_022",
+  masters_degree = "B15003_023",
+  professional_school_degree = "B15003_024",
+  doctorate_degree = "B15003_025",
+  commute_car_truck_or_van = "B08301_002",
+  commute_drove_alone = "B08301_003",
+  commute_carpooled = "B08301_004",
+  commute_in_2_person_carpool = "B08301_005",
+  commute_in_3_person_carpool = "B08301_006",
+  commute_in_4_person_carpool = "B08301_007",
+  commute_in_5_or_6_person_carpool = "B08301_008",
+  commute_in_7_or_more_person_carpool = "B08301_009",
+  commute_public_transportation_excluding_taxicab = "B08301_010",
+  commute_bus_or_trolley_bus = "B08301_011",
+  commute_streetcar_or_trolley_car = "B08301_012",
+  commute_subway_or_elevated = "B08301_013",
+  commute_railroad = "B08301_014",
+  commute_ferryboat = "B08301_015",
+  commute_taxicab = "B08301_016",
+  commute_motorcycle = "B08301_017",
+  commute_bicycle = "B08301_018",
+  commute_walked = "B08301_019",
+  commute_other_means = "B08301_020",
+  commute_worked_at_home = "B08301_021",
+  hh_income_less_than_10000 = 'B19001_002',
+  hh_income_10000_to_14999 = 'B19001_003',
+  hh_income_15000_to_19999 = 'B19001_004',
+  hh_income_20000_to_24999 = 'B19001_005',
+  hh_income_25000_to_29999 = 'B19001_006',
+  hh_income_30000_to_34999 = 'B19001_007',
+  hh_income_35000_to_39999 = 'B19001_008',
+  hh_income_40000_to_44999 = 'B19001_009',
+  hh_income_45000_to_49999 = 'B19001_010',
+  hh_income_50000_to_59999 = 'B19001_011',
+  hh_income_60000_to_74999 = 'B19001_012',
+  hh_income_75000_to_99999 = 'B19001_013',
+  hh_income_100000_to_124999 = 'B19001_014',
+  hh_income_125000_to_149999 = 'B19001_015',
+  hh_income_150000_to_199999 = 'B19001_016',
+  hh_income_200_000_or_more = 'B19001_017',
+  workers_no_vehicle_available = 'B08014_002',
+  workers_1_vehicle_available = 'B08014_003',
+  workers_2_vehicles_available = 'B08014_004',
+  workers_3_vehicles_available = 'B08014_005',
+  workers_4_vehicles_available = 'B08014_006',
+  workers_5_plus_vehicles_available = 'B08014_007'
 )
 
-acs2017Variables <- load_variables(2017, "acs5", cache = TRUE)
+acs2018Variables <- load_variables(2018, "acs5", cache = TRUE)
 
 pulled_vars <- data.frame(censusVars, stringsAsFactors = F) %>%
   inner_join(acs2017Variables, by = c("censusVars" = "name"))
@@ -140,13 +206,21 @@ stJoesTractCSV <- stJoesTract %>%
   select(CensusTract, County, State, everything()) %>%
   select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
 
-colnames(stJoesTractCSV)[4:75] <- names(censusVars)
+colnames(stJoesTractCSV)[4:ncol(stJoesTractCSV)] <- names(censusVars)
 
 stJoesBlockGroupCSV <- stJoesBlockGroup %>%
   select(BlockGroup, CensusTract, County, State, everything()) %>%
   select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
 
-colnames(stJoesBlockGroupCSV)[5:76] <- names(censusVars)
+colnames(stJoesBlockGroupCSV)[5:ncol(stJoesBlockGroupCSV)] <- names(censusVars)
 
 write.csv(stJoesTractCSV, "St_Joes_Tract_Data.csv", row.names = F)
 write.csv(stJoesBlockGroupCSV, "St_Joes_Block_Group_Data.csv", row.names = F)
+
+stJoesBlockGroup %>%
+  summarize(pop = sum(total_populationE))
+
+stJoesTract %>%
+  summarize(pop = sum(total_populationE))
+
+pca_bg$x
