@@ -189,3 +189,126 @@ education_table <- education_melted %>%
   select(-n) %>%
   spread(key = education_level, value = prop)
 
+
+
+####ASHLEY
+
+ggplot(
+  data = minus_margins_bg,
+  aes(x = total_hous_unitsE, y = median_ageE, color = as.factor(cluster))
+) + geom_point() +
+  labs(color = "Profile",
+       x = "Housing Units",
+       y = "Median Age",
+       title = "Age vs Housing Units")
+
+
+ggplot(
+  data = minus_margins_bg,
+  aes(x = total_hous_unitsE, y = tot_whiteE, color = as.factor(cluster))
+) + geom_point() +
+  labs(color = "Profile",
+       x = "Housing Units",
+       y = "Total White",
+       title = "Total White vs Housing Units")
+
+ggplot(
+  data = minus_margins_bg,
+  aes(x = total_hous_unitsE, y = tot_blackE, color = as.factor(cluster))
+) + geom_point() +
+  labs(color = "Profile",
+       x = "Housing Units",
+       y = "Total Black",
+       title = "Total Black vs Housing Units")
+
+library(dplyr)
+
+#find median ages
+minus_margins_bg %>% 
+  count(cluster, median_ageE) %>%
+  group_by(as.factor(cluster)) %>%
+  summarise(median_age = median(median_ageE))
+
+
+#find total population
+minus_margins_bg %>% 
+  count(cluster, total_populationE) %>%
+  group_by(as.factor(cluster)) %>%
+  summarise(total_pop = sum(total_populationE))
+
+
+#race for each cluster
+#cluster 3
+grouped_race_by_cluster3 <- race_melted %>% filter(cluster == 3) %>% 
+  group_by(cluster, variable) %>% summarise(value = sum(value))
+
+grouped_race_by_cluster3 %>% 
+  ggplot(
+    aes(x = as.factor(cluster), y = value, fill = variable)
+  ) + geom_bar(stat = "identity") + coord_polar("y") +
+  geom_text(aes(label = paste0(round(value/sum(value)*100,1), "%")), 
+            position = position_stack(vjust = 0.5)) +
+  labs(fill = "Race",
+       y = NULL,
+       x = NULL,
+       title = "Cluster 3 by Race") +
+  theme_classic() + theme(axis.line = element_blank(),
+                          axis.text = element_blank(),
+                          axis.ticks = element_blank())
+
+#cluster 4
+grouped_race_by_cluster4 <- race_melted %>% filter(cluster == 4) %>% 
+  group_by(cluster, variable) %>% summarise(value = sum(value))
+
+grouped_race_by_cluster4 %>% 
+  ggplot(
+    aes(x = as.factor(cluster), y = value, fill = variable)
+  ) + geom_bar(stat = "identity") + coord_polar("y") +
+  geom_text(aes(label = paste0(round(value/sum(value)*100,1), "%")), 
+            position = position_stack(vjust = 0.5)) +
+  labs(fill = "Race",
+       y = NULL,
+       x = NULL,
+       title = "Cluster 4 by Race") +
+  theme_classic() + theme(axis.line = element_blank(),
+                          axis.text = element_blank(),
+                          axis.ticks = element_blank())
+
+#cluster 5
+grouped_race_by_cluster5 <- race_melted %>% filter(cluster == 5) %>% 
+  group_by(cluster, variable) %>% summarise(value = sum(value))
+
+grouped_race_by_cluster5 %>% 
+  ggplot(
+    aes(x = as.factor(cluster), y = value, fill = variable)
+  ) + geom_bar(stat = "identity") + coord_polar("y") +
+  geom_text(aes(label = paste0(round(value/sum(value)*100,1), "%")), 
+            position = position_stack(vjust = 0.5)) +
+  labs(fill = "Race",
+       y = NULL,
+       x = NULL,
+       title = "Cluster 5 by Race") +
+  theme_classic() + theme(axis.line = element_blank(),
+                          axis.text = element_blank(),
+                          axis.ticks = element_blank())
+
+
+#total housing units
+minus_margins_bg %>% 
+  count(cluster, total_hous_unitsE) %>%
+  group_by(as.factor(cluster)) %>%
+  summarise(total_houses = sum(total_hous_unitsE))
+
+
+#median fam income
+minus_margins_bg %>% 
+  count(cluster, med_fam_incomeE) %>%
+  group_by(as.factor(cluster)) %>%
+  summarise(med_family_income = median(med_fam_incomeE))
+###some NAs
+
+
+
+
+
+
