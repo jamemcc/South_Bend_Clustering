@@ -38,12 +38,14 @@ leaflet() %>%
 
 ggplot(
   data = minus_margins_bg,
-  aes(x = total_populationE, y = total_hous_unitsE, color = as.factor(cluster))
+  aes(x = total_hous_unitsE, y = total_populationE, color = as.factor(cluster))
 ) + geom_point() +
   labs(color = "Profile",
        y = "Population",
        x = "Housing Units",
        title = "Block Group Population vs Housing Units")
+
+
 
 ####### Some profile Exploration Work from Dan
 
@@ -133,21 +135,21 @@ housing_by_cluster <- minus_margins_bg %>% group_by(cluster) %>%
 # lets look at education levels
 education_melted <- melt(minus_margins_bg, id.vars = "cluster", measure.vars = c("no_schooling_completedE", 
                                                                                  "nursery_schoolE",
-                                                                            "kindergartenE", "first_gradeE",
-                                                                            "second_gradeE", "third_gradeE",
-                                                                            "fourth_gradeE", "fifth_gradeE",
-                                                                            "sixth_gradeE", "seventh_gradeE",
-                                                                            "eigth_gradeE", "ninth_gradeE",
-                                                                            "tenth_gradeE", "eleventh_gradeE",
-                                                                            "twelfth_grade_no_diplomaE",
-                                                                            "regular_high_school_diplomaE",
-                                                                            "ged_or_alternative_credentialE",
-                                                                            "some_college_less_than_1_yearE",
-                                                                            "some_college_1_or_more_years_no_degreeE",
-                                                                            "associates_degreeE", "bachelors_degreeE",
-                                                                            "masters_degreeE", 
-                                                                            "professional_school_degreeE",
-                                                                            "doctorate_degreeE"))
+                                                                                 "kindergartenE", "first_gradeE",
+                                                                                 "second_gradeE", "third_gradeE",
+                                                                                 "fourth_gradeE", "fifth_gradeE",
+                                                                                 "sixth_gradeE", "seventh_gradeE",
+                                                                                 "eigth_gradeE", "ninth_gradeE",
+                                                                                 "tenth_gradeE", "eleventh_gradeE",
+                                                                                 "twelfth_grade_no_diplomaE",
+                                                                                 "regular_high_school_diplomaE",
+                                                                                 "ged_or_alternative_credentialE",
+                                                                                 "some_college_less_than_1_yearE",
+                                                                                 "some_college_1_or_more_years_no_degreeE",
+                                                                                 "associates_degreeE", "bachelors_degreeE",
+                                                                                 "masters_degreeE", 
+                                                                                 "professional_school_degreeE",
+                                                                                 "doctorate_degreeE"))
 
 # classify each level of education into a grouping of Below Elementary, Elementary, High School, 
 # Some College, Bachelors Degree, Masters or Above
@@ -162,20 +164,20 @@ education_melted <- education_melted %>% mutate(education_level = ifelse(variabl
                                                                          ifelse(variable %in% c("eigth_gradeE", "ninth_gradeE",
                                                                                                 "tenth_gradeE", "eleventh_gradeE"),
                                                                                 "Elementary",
-                                                                         ifelse(variable %in% c("twelfth_grade_no_diplomaE",
-                                                                                                "regular_high_school_diplomaE",
-                                                                                                "ged_or_alternative_credentialE"),
-                                                                                "High School",
-                                                                         ifelse(variable %in% c("some_college_less_than_1_yearE",
-                                                                                                "some_college_1_or_more_years_no_degreeE",
-                                                                                                "associates_degreeE"),
-                                                                                "Some College",
-                                                                          ifelse(variable %in% c("bachelors_degreeE"),
-                                                                                 "Bachelors Degree",
-                                                                          ifelse(variable %in% c("masters_degreeE", 
-                                                                                                 "professional_school_degreeE",
-                                                                                                 "doctorate_degreeE"),
-                                                                                 "Masters or Above", "Unknown")))))))
+                                                                                ifelse(variable %in% c("twelfth_grade_no_diplomaE",
+                                                                                                       "regular_high_school_diplomaE",
+                                                                                                       "ged_or_alternative_credentialE"),
+                                                                                       "High School",
+                                                                                       ifelse(variable %in% c("some_college_less_than_1_yearE",
+                                                                                                              "some_college_1_or_more_years_no_degreeE",
+                                                                                                              "associates_degreeE"),
+                                                                                              "Some College",
+                                                                                              ifelse(variable %in% c("bachelors_degreeE"),
+                                                                                                     "Bachelors Degree",
+                                                                                                     ifelse(variable %in% c("masters_degreeE", 
+                                                                                                                            "professional_school_degreeE",
+                                                                                                                            "doctorate_degreeE"),
+                                                                                                            "Masters or Above", "Unknown")))))))
 
 # calcuate the percent achieved for each cluster
 education_by_cluster <- education_melted %>% group_by(cluster, education_level) %>% 
@@ -188,6 +190,10 @@ education_table <- education_melted %>%
   mutate(prop = n/sum(n)) %>%
   select(-n) %>%
   spread(key = education_level, value = prop)
+
+
+
+
 
 
 
@@ -304,17 +310,8 @@ minus_margins_bg %>%
 minus_margins_bg %>% 
   count(cluster, med_fam_incomeE) %>%
   group_by(as.factor(cluster)) %>%
-  summarise(med_family_income = median(med_fam_incomeE, na.rm=TRUE))
-
-
-#family households vs non-family households
-minus_margins_bg %>% 
-  count(cluster, tot_householdsE, family_householdsE, non_family_householdsE) %>%
-  group_by(as.factor(cluster)) %>%
-  summarise(families = sum(family_householdsE/tot_householdsE), nonfamilies = sum(non_family_householdsE/tot_householdsE), 
-            totalhouseholds = sum(tot_householdsE))
-
-
+  summarise(med_family_income = median(med_fam_incomeE))
+  ###some NAs
 
 
 
