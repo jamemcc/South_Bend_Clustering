@@ -72,7 +72,15 @@ library(reshape2)
 race_melted <- melt(minus_margins_bg, id.vars = "cluster", measure.vars = c("tot_whiteE", "tot_blackE",
                                                                             "tot_asianE", "tot_nativeE",
                                                                             "tot_pacificE", "tot_otherE"))
+# replace values of races
+levels(race_melted$variable)[levels(race_melted$variable) == "tot_whiteE"] <- "White"
+levels(race_melted$variable)[levels(race_melted$variable) == "tot_blackE"] <- "Black"
+levels(race_melted$variable)[levels(race_melted$variable) == "tot_asianE"] <- "Asian"
+levels(race_melted$variable)[levels(race_melted$variable) == "tot_nativeE"] <- "Native Amer"
+levels(race_melted$variable)[levels(race_melted$variable) == "tot_pacificE"] <- "Pacific"
+levels(race_melted$variable)[levels(race_melted$variable) == "tot_otherE"] <- "Other"
 
+# population by Race bar chart
 ggplot(
   data = race_melted,
   aes(x = as.factor(cluster), y = value, fill = variable)
@@ -80,34 +88,17 @@ ggplot(
   labs(fill = "Race",
        y = "Population",
        x = "Cluster",
-       title = "Population by Race")
+       title = "Population by Race") +
+  scale_fill_discrete(labels = c("White", "Black", "Asian", "Native Amer", "Pacific Isl", "Other"))
 
-# Maybe interesting to see each Cluster with Race as a pie chart (just to make the storytelling person mad)
-# group the melted race data by cluster 1 for easier use
-grouped_race_by_cluster1 <- race_melted %>% filter(cluster == 1) %>% 
-  group_by(cluster, variable) %>% summarise(value = sum(value))
 
-grouped_race_by_cluster1 %>% 
-  ggplot(
-    aes(x = as.factor(cluster), y = value, fill = variable)
-  ) + geom_bar(stat = "identity") + coord_polar("y") +
-  geom_text(aes(label = paste0(round(value/sum(value)*100,1), "%")), 
-            position = position_stack(vjust = 0.5)) +
-  labs(fill = "Race",
-       y = NULL,
-       x = NULL,
-       title = "Cluster 1 by Race") +
-  theme_classic() + theme(axis.line = element_blank(),
-                          axis.text = element_blank(),
-                          axis.ticks = element_blank())
-# not crazy about how the pie looks, but we can discuss and make more if we like it
-
-# compare the pie chart to this bar plot
-# lets try a bar plot
+# bar plot for a single cluster
 ggplot(grouped_race_by_cluster1, aes(x = factor(cluster), y = value/sum(value) * 100, fill = factor(variable))) +
   geom_bar(stat = "identity", width = 0.7) +
   labs(x = "Cluster", y = "percent", fill = "Race") +
-  theme_minimal(base_size = 14)
+  theme_minimal(base_size = 14) + 
+  scale_fill_discrete(labels = c("White", "Black", "Asian", "Native Amer", "Pacific Isl", "Other"))
+
 
 # group by cluster and race to create a different bar chart view
 grouped_race_by_cluster <- race_melted %>% 
@@ -238,11 +229,24 @@ minus_margins_bg %>%
 
 
 #race for each cluster
-#cluster 3
-grouped_race_by_cluster3 <- race_melted %>% filter(cluster == 3) %>% 
+# Maybe interesting to see each Cluster with Race as a pie chart (just to make the storytelling person mad)
+# group the melted race data by cluster 1 for easier use
+
+# set the margins - had to use a big top margin because the plot labels were getting cut-off
+m = list(
+  l = 40,
+  r = 40,
+  b = 50,
+  t = 150,
+  pad = 0
+)
+
+# cluster 1
+grouped_race_by_cluster1 <- race_melted %>% filter(cluster == 1) %>% 
   group_by(cluster, variable) %>% summarise(value = sum(value))
 
-grouped_race_by_cluster3 %>% 
+# ggplot pie chart for cluster 1
+grouped_race_by_cluster1 %>% 
   ggplot(
     aes(x = as.factor(cluster), y = value, fill = variable)
   ) + geom_bar(stat = "identity") + coord_polar("y") +
@@ -251,46 +255,70 @@ grouped_race_by_cluster3 %>%
   labs(fill = "Race",
        y = NULL,
        x = NULL,
-       title = "Cluster 3 by Race") +
+       title = "Cluster 1 by Race") +
   theme_classic() + theme(axis.line = element_blank(),
                           axis.text = element_blank(),
-                          axis.ticks = element_blank())
+                          axis.ticks = element_blank()) +
+  scale_fill_discrete(labels = c("White", "Black", "Asian", "Native Amer", "Pacific Isl", "Other"))
+
+# cluster 1 pie plot using plotly library
+library(plotly)
+plot_ly(grouped_race_by_cluster1, labels = ~variable, values = ~value, type = "pie",
+        textposition = "outside", textinfo = "label+percent", showlegend = FALSE,
+        width = 700, height = 700) %>%
+  layout(title = "Cluster 1 by Race",
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         margin = m)
+
+#cluster 2
+grouped_race_by_cluster2 <- race_melted %>% filter(cluster == 2) %>% 
+  group_by(cluster, variable) %>% summarise(value = sum(value))
+
+plot_ly(grouped_race_by_cluster2, labels = ~variable, values = ~value, type = "pie",
+        textposition = "outside", textinfo = "label+percent", showlegend = FALSE, width = 700,
+        height = 700) %>%
+  layout(title = "Cluster 2 by Race",
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         autosize = FALSE,
+         margin = m)
+
+#cluster 3
+grouped_race_by_cluster3 <- race_melted %>% filter(cluster == 3) %>% 
+  group_by(cluster, variable) %>% summarise(value = sum(value))
+
+plot_ly(grouped_race_by_cluster3, labels = ~variable, values = ~value, type = "pie",
+        textposition = "outside", textinfo = "label+percent", showlegend = FALSE,
+        width = 700, height = 700) %>%
+  layout(title = "Cluster 3 by Race",
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+        margin = m)
 
 #cluster 4
 grouped_race_by_cluster4 <- race_melted %>% filter(cluster == 4) %>% 
   group_by(cluster, variable) %>% summarise(value = sum(value))
 
-grouped_race_by_cluster4 %>% 
-  ggplot(
-    aes(x = as.factor(cluster), y = value, fill = variable)
-  ) + geom_bar(stat = "identity") + coord_polar("y") +
-  geom_text(aes(label = paste0(round(value/sum(value)*100,1), "%")), 
-            position = position_stack(vjust = 0.5)) +
-  labs(fill = "Race",
-       y = NULL,
-       x = NULL,
-       title = "Cluster 4 by Race") +
-  theme_classic() + theme(axis.line = element_blank(),
-                          axis.text = element_blank(),
-                          axis.ticks = element_blank())
+plot_ly(grouped_race_by_cluster4, labels = ~variable, values = ~value, type = "pie",
+        textposition = "outside", textinfo = "label+percent", showlegend = FALSE,
+        width = 700, height = 700) %>%
+  layout(title = "Cluster 4 by Race",
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         margin = m)
 
 #cluster 5
 grouped_race_by_cluster5 <- race_melted %>% filter(cluster == 5) %>% 
   group_by(cluster, variable) %>% summarise(value = sum(value))
 
-grouped_race_by_cluster5 %>% 
-  ggplot(
-    aes(x = as.factor(cluster), y = value, fill = variable)
-  ) + geom_bar(stat = "identity") + coord_polar("y") +
-  geom_text(aes(label = paste0(round(value/sum(value)*100,1), "%")), 
-            position = position_stack(vjust = 0.5)) +
-  labs(fill = "Race",
-       y = NULL,
-       x = NULL,
-       title = "Cluster 5 by Race") +
-  theme_classic() + theme(axis.line = element_blank(),
-                          axis.text = element_blank(),
-                          axis.ticks = element_blank())
+plot_ly(grouped_race_by_cluster5, labels = ~variable, values = ~value, type = "pie",
+        textposition = "outside", textinfo = "label+percent", showlegend = FALSE,
+        width = 700, height = 700) %>%
+  layout(title = "Cluster 5 by Race",
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         margin = m)
 
 
 #total housing units
