@@ -1,0 +1,39 @@
+---
+title: "Final Deliverable"
+author: "Joe Kosteck"
+date: "March 25, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+setwd("~/GitHub/DS-Now-Final-Project")
+
+library(tidycensus)
+library(tidyverse)
+library(leaflet)
+
+load("clustering_work.RData")
+load("census_shapefiles.RData")
+```
+
+```{r}
+block_group_map_data_bg <- blockGroupShapes %>%
+  left_join(filtered_bg, by = "NAME") %>%
+  mutate(Profile = kmeans_five_bg$cluster)
+
+clusterPal_bg <- colorFactor("Set3", block_group_map_data_bg$Profile)
+
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = block_group_map_data_bg,
+              color = ~clusterPal_bg(Profile),
+              fillOpacity = .75,
+              opacity = 1,
+              popup = ~NAME) %>%
+  addLegend(pal = clusterPal_bg,
+            values = block_group_map_data_bg$Profile)
+```

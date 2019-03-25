@@ -1,4 +1,4 @@
-setwd("~/Documents/GitHub/DS-Now-Final-Project")
+setwd("~/GitHub/DS-Now-Final-Project")
 
 library(tidycensus)
 library(tidyverse)
