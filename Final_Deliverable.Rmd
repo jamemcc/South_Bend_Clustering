@@ -25,7 +25,7 @@ block_group_map_data_bg <- blockGroupShapes %>%
   left_join(filtered_bg, by = "NAME") %>%
   mutate(Profile = kmeans_five_bg$cluster)
 
-clusterPal_bg <- colorFactor("Set3", block_group_map_data_bg$Profile)
+clusterPal_bg <- colorFactor("Dark2", block_group_map_data_bg$Profile)
 
 leaflet() %>%
   addTiles() %>%
