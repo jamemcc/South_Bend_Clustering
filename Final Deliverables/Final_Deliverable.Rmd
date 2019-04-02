@@ -17,32 +17,17 @@ library(tidyverse)
 library(leaflet)
 library(rgdal)
 library(DT)
+library(rgeos)
+library(sf)
 
 load("cluster data for analysis.RData")
 load("census_shapefiles.RData")
 ```
 
 ```{r}
-near_west_side <- readOGR("./South_Bend_Active_Neighborhoods_Map",
-                          layer = "Near_West_Side_Neighborhood-polygon",
-                          stringsAsFactors = F)
-
 neighborhoods <- readOGR("./South_Bend_Active_Neighborhoods_Map",
                          layer = "Neighborhood_Boundaries-polygon",
                          stringsAsFactors = F)
-
-southeast_area <- neighborhoods <- readOGR("./South_Bend_Active_Neighborhoods_Map",
-                         layer = "Southeast_Organized_Area_Residents-polygon",
-                         stringsAsFactors = F)
-
-```
-
-```{r}
-leaflet() %>%
-  addTiles() %>%
-  addPolygons(data = near_west_side) %>%
-  addPolygons(data = southeast_area) %>%
-  addPolygons(data = neighborhoods)
 ```
 
 ```{r}
@@ -54,53 +39,62 @@ block_shapes_profile <- block_shapes %>%
 profile_block_pal <- colorFactor("Dark2", block_shapes$Profile)
 profile_colors <- profile_block_pal(1:5)
 
+block_shapes_profile$`Block Group` <- str_remove(block_shapes_profile$`Block Group`,
+                                                 "Block Group ")
+
+block_shapes_profile$`Census Tract` <- str_remove(block_shapes_profile$`Census Tract`,
+                                                  "Census Tract ")
+
+block_shapes_profile$name_popup <- paste0("<b>Profile: </b>",
+                                          block_shapes_profile$Profile,
+                                          "<br><b>Census Tract: </b>",
+                                          block_shapes_profile$`Census Tract`,
+                                          "<br><b>Block Group: </b>",
+                                          block_shapes_profile$`Block Group`)
+
 leaflet() %>%
   addTiles() %>%
-  addPolygons(data = neighborhoods,
-              color = "black",
-              fillOpacity = 0,
-              opacity = 1,
-              weight = .5,
-              group = "Neighborhoods") %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 1,],
               color = profile_colors[1],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
-              group = "Profile 1",
-              label = "Profile 1") %>%
+              popup = ~name_popup,
+              group = "Profile 1") %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 2,],
               color = profile_colors[2],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
-              group = "Profile 2",
-              label = "Profile 2") %>%
+              popup = ~name_popup,
+              group = "Profile 2") %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 3,],
               color = profile_colors[3],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
-              group = "Profile 3",
-              label = "Profile 3") %>%
+              popup = ~name_popup,
+              group = "Profile 3") %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 4,],
               color = profile_colors[4],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
-              group = "Profile 4",
-              label = "Profile 4") %>%
+              popup = ~name_popup,
+              group = "Profile 4") %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 5,],
               color = profile_colors[5],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
-              group = "Profile 5",
-              label = "Profile 5") %>%
+              popup = ~name_popup,
+              group = "Profile 5") %>%
+  addPolygons(data = neighborhoods,
+              color = "black",
+              fillOpacity = .4,
+              opacity = 1,
+              weight = 2,
+              group = "Neighborhoods",
+              label = ~Name) %>%
   addLegend(pal = profile_block_pal,
             values = block_shapes_profile$Profile) %>%
   addLayersControl(overlayGroups = c("Profile 1", "Profile 2", "Profile 3",
-                                     "Profile 4", "Profile 5"),
+                                     "Profile 4", "Profile 5", "Neighborhoods"),
                    options = layersControlOptions(collapsed = FALSE),
                    position = "topleft")
 ```
@@ -255,17 +249,42 @@ datatable(transposed_center_block)
 ```
 
 ```{r}
+overlap_matrix <- gOverlaps(neighborhoods,
+                            sf::as_Spatial(block_shapes_profile,
+                                           IDs = block_shapes_profile$NAME),
+                            byid = T)
+touches_matrix <- gTouches(neighborhoods,
+                            sf::as_Spatial(block_shapes_profile,
+                                           IDs = block_shapes_profile$NAME),
+                            byid = T)
+
+block_tibble <- as.tibble(block_shapes_profile) %>%
+  select(-geometry, name_popup)
+
+neighborhood_touches <- list()
+
+for (i in 1:length(neighborhoods$Name)) {
+  neighborhood_touches[[i]] <- block_tibble[touches_matrix[, i], ]
+}
+
+names(neighborhood_touches) <- neighborhoods$Name
+
+```
+
+##Profile 1
+```{r}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 1,],
               color = profile_colors[1],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
+              popup = ~name_popup,
               group = "Profile 1",
               label = "Profile 1")
 ```
 
+##Profile 2
 ```{r}
 leaflet() %>%
   addTiles() %>%
@@ -273,11 +292,12 @@ leaflet() %>%
               color = profile_colors[2],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
+              popup = ~name_popup,
               group = "Profile 2",
               label = "Profile 2")
 ```
 
+##Profile 3
 ```{r}
 leaflet() %>%
   addTiles() %>%
@@ -285,11 +305,12 @@ leaflet() %>%
               color = profile_colors[3],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
+              popup = ~name_popup,
               group = "Profile 3",
               label = "Profile 3")
 ```
 
+##Profile 4
 ```{r}
 leaflet() %>%
   addTiles() %>%
@@ -297,11 +318,12 @@ leaflet() %>%
               color = profile_colors[4],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
+              popup = ~name_popup,
               group = "Profile 4",
               label = "Profile 4")
 ```
 
+#Profile 5
 ```{r}
 leaflet() %>%
   addTiles() %>%
@@ -309,7 +331,7 @@ leaflet() %>%
               color = profile_colors[5],
               fillOpacity = .75,
               opacity = 1,
-              popup = ~NAME,
+              popup = ~name_popup,
               group = "Profile 5",
               label = "Profile 5")
 ```
