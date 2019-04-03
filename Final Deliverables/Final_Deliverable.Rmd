@@ -250,7 +250,7 @@ rownames(transposed_center_block) <- c("Average Population",
 datatable(transposed_center_block)
 ```
 
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 spatial_block_shapes <- sf::as_Spatial(block_shapes_profile,
                                        IDs = block_shapes_profile$NAME)
 
@@ -285,11 +285,11 @@ block_tibble <- as.tibble(block_shapes_profile) %>%
 neighborhood_touches <- NULL
 
 for (i in 1:length(neighborhoods$Name)) {
-  new_neighborhood <- block_tibble[index_matrix[, 3], ] %>%
+  new_neighborhood <- block_tibble[index_matrix[, i], ] %>%
     inner_join(imputed_block, by = c("Block Group", "Census Tract"))
   
   if(nrow(new_neighborhood) > 0) {
-    new_neighborhood$Neighborhood <- neighborhoods$Name[2]
+    new_neighborhood$Neighborhood <- neighborhoods$Name[i]
     
     neighborhood_touches <- bind_rows(neighborhood_touches, new_neighborhood)
   }
@@ -297,128 +297,130 @@ for (i in 1:length(neighborhoods$Name)) {
 
 ```
 
-```{r}
+```{r, echo=FALSE, warning=FALSE}
 neighborhood_touches <- neighborhood_touches %>%
-  select(-NAME, -name_popup) %>%
-  select(Neighborhood, Profile = cluster, everything())
+  select(-NAME, -name_popup, -cluster) %>%
+  select(Neighborhood, Profile, everything())
 
-colnames(neighborhood_touches) <- c("Neighborhood",
-                                    "Block Group",
-                                    "Census Tract",
-                                    "Profile",
-                                    "Total Population",
-                                    "Total Housing Units",
-                                    "Total Occupied Housing Units",
-                                    "Total Vacant Housing Units",
-                                    "Total Owner-Occupied Units",
-                                    "Total Renter-Occupied Units",
-                                    "Total Units for Rent",
-                                    "Total Rented, Non-Occupied Units",
-                                    "Total Units for Sale",
-                                    "Total Sold, Non-Occupied Units",
-                                    "25th Percentile Home Value",
-                                    "50th Percentile Home Value",
-                                    "75th Percentile Home Value",
-                                    "Median Owner Cost - Mortgage",
-                                    "Median Owner Cost - No Mortgage",
-                                    "Median Owner Cost/Income - Mortgage",
-                                    "Median Owner Cost/Income - No Mortgage",
-                                    "Median Family Income",
-                                    "Total White Population",
-                                    "Total Black Population",
-                                    "Total Native American Population",
-                                    "Total Asian Population",
-                                    "Total Pacific Islander Population",
-                                    "Total Other Population",
-                                    "Total Two or More Races Population",
-                                    "Median Age",
-                                    "Median Age - Male",
-                                    "Median Age - Female",
-                                    "Total Households",
-                                    "Family Households",
-                                    "Family Households - Married",
-                                    "Family Households - Other",
-                                    "Non-family Households",
-                                    "Non-family Households - Alone",
-                                    "Non-family Households - Not Alone",
-                                    "Two Person Families",
-                                    "Three Person Families",
-                                    "Four Person Families",
-                                    "Five Person Families",
-                                    "Six Person Families",
-                                    "7 or More Person Families",
-                                    "1 Person Non-families",
-                                    "2 Person Non-families",
-                                    "3 Person Non-families",
-                                    "4 Person Non-families",
-                                    "5 Person Non-families",
-                                    "6 Person Non-families",
-                                    "7 or More Person Non-families",
-                                    "Average Labor Force",
-                                    "Civilian Labor Force",
-                                    "Civilian Labor Force - Employed",
-                                    "Civilian Labor Force - Unemployed",
-                                    "Military Labor Force",
-                                    "Non-Labor Force",
-                                    "Education - No Schooling",
-                                    "Education - Nursery School",
-                                    "Education - Kindergarten",
-                                    "Education - First Grade",
-                                    "Education - Second Grade",
-                                    "Education - Third Grade",
-                                    "Education - Fourth Grade",
-                                    "Education - Fifth Grade",
-                                    "Education - Sixth Grade",
-                                    "Education - Seventh Grade",
-                                    "Education - Eighth Grade",
-                                    "Education - Ninth Grade",
-                                    "Education - Tenth Grade",
-                                    "Education - Eleventh Grade",
-                                    "Education - Twelfth Grade - No Diploma",
-                                    "Education - High School Diploma",
-                                    "Education - GED or Alternative",
-                                    "Education - Less Than 1 Year College",
-                                    "Education - More Than 1 Year Collage - No Degree",
-                                    "Education - Associates Degree",
-                                    "Education - Bachelors Degree",
-                                    "Education - Masters Degree",
-                                    "Education - Professional School Degree",
-                                    "Education - Doctorate Degree",
-                                    "Commute - Car, Truck or Van",
-                                    "Commute - Drive Alone",
-                                    "Commute - Carpool",
-                                    "Commute - 2 Person Carpool",
-                                    "Commute - 3 Person Carpool",
-                                    "Commute - 4 Person Carpool",
-                                    "Commute - 5 or 6 Person Carpool",
-                                    "Commute - 7 or More Person Carpool",
-                                    "Commute - Public Transportation",
-                                    "Commute - Bus or Trolley",
-                                    "Commute - Subway or Elevated Train",
-                                    "Commute - Railroad Train",
-                                    "Commute - Ferry Boat",
-                                    "Commute - Taxi",
-                                    "Commute - Motorcycle",
-                                    "Commute - Bicycle",
-                                    "Commute - Walk",
-                                    "Commute - Other Means",
-                                    "Commute - Work from Home",
-                                    "Household Income - Less than $10,000",
-                                    "Household Income - $10,000 - $14,999",
-                                    "Household Income - $15,000 - $19,999",
-                                    "Household Income - $20,000 - $24,999",
-                                    "Household Income - $25,000 - $29,999",
-                                    "Household Income - $30,000 - $34,999",
-                                    "Household Income - $35,000 - $39,999",
-                                    "Household Income - $40,000 - $44,999",
-                                    "Household Income - $45,000 - $49,999",
-                                    "Household Income - $50,000 - $59,999",
-                                    "Household Income - $60,000 - $74,999",
-                                    "Household Income - $75,000 - $99,999",
-                                    "Household Income - $100,000 - $124,999",
-                                    "Household Income - $125,000 - $149,999",
-                                    "Household Income - $150,000 - $199,999",
-                                    "Household Income - $200,000 or More")
+neighborhood_touches_names <- c("Neighborhood",
+                                "Profile",
+                                "Block Group",
+                                "Census Tract",
+                                "Total Population",
+                                "Total Housing Units",
+                                "Total Occupied Housing Units",
+                                "Total Vacant Housing Units",
+                                "Total Owner-Occupied Units",
+                                "Total Renter-Occupied Units",
+                                "Total Units for Rent",
+                                "Total Rented, Non-Occupied Units",
+                                "Total Units for Sale",
+                                "Total Sold, Non-Occupied Units",
+                                "25th Percentile Home Value",
+                                "50th Percentile Home Value",
+                                "75th Percentile Home Value",
+                                "Median Owner Cost - Mortgage",
+                                "Median Owner Cost - No Mortgage",
+                                "Median Owner Cost/Income - Mortgage",
+                                "Median Owner Cost/Income - No Mortgage",
+                                "Median Family Income",
+                                "Total White Population",
+                                "Total Black Population",
+                                "Total Native American Population",
+                                "Total Asian Population",
+                                "Total Pacific Islander Population",
+                                "Total Other Population",
+                                "Total Two or More Races Population",
+                                "Median Age",
+                                "Median Age - Male",
+                                "Median Age - Female",
+                                "Total Households",
+                                "Family Households",
+                                "Family Households - Married",
+                                "Family Households - Other",
+                                "Non-family Households",
+                                "Non-family Households - Alone",
+                                "Non-family Households - Not Alone",
+                                "Two Person Families",
+                                "Three Person Families",
+                                "Four Person Families",
+                                "Five Person Families",
+                                "Six Person Families",
+                                "7 or More Person Families",
+                                "1 Person Non-families",
+                                "2 Person Non-families",
+                                "3 Person Non-families",
+                                "4 Person Non-families",
+                                "5 Person Non-families",
+                                "6 Person Non-families",
+                                "7 or More Person Non-families",
+                                "Average Labor Force",
+                                "Civilian Labor Force",
+                                "Civilian Labor Force - Employed",
+                                "Civilian Labor Force - Unemployed",
+                                "Military Labor Force",
+                                "Non-Labor Force",
+                                "Education - No Schooling",
+                                "Education - Nursery School",
+                                "Education - Kindergarten",
+                                "Education - First Grade",
+                                "Education - Second Grade",
+                                "Education - Third Grade",
+                                "Education - Fourth Grade",
+                                "Education - Fifth Grade",
+                                "Education - Sixth Grade",
+                                "Education - Seventh Grade",
+                                "Education - Eighth Grade",
+                                "Education - Ninth Grade",
+                                "Education - Tenth Grade",
+                                "Education - Eleventh Grade",
+                                "Education - Twelfth Grade - No Diploma",
+                                "Education - High School Diploma",
+                                "Education - GED or Alternative",
+                                "Education - Less Than 1 Year College",
+                                "Education - More Than 1 Year Collage - No Degree",
+                                "Education - Associates Degree",
+                                "Education - Bachelors Degree",
+                                "Education - Masters Degree",
+                                "Education - Professional School Degree",
+                                "Education - Doctorate Degree",
+                                "Commute - Car, Truck or Van",
+                                "Commute - Drive Alone",
+                                "Commute - Carpool",
+                                "Commute - 2 Person Carpool",
+                                "Commute - 3 Person Carpool",
+                                "Commute - 4 Person Carpool",
+                                "Commute - 5 or 6 Person Carpool",
+                                "Commute - 7 or More Person Carpool",
+                                "Commute - Public Transportation",
+                                "Commute - Bus or Trolley",
+                                "Commute - Subway or Elevated Train",
+                                "Commute - Railroad Train",
+                                "Commute - Ferry Boat",
+                                "Commute - Taxi",
+                                "Commute - Motorcycle",
+                                "Commute - Bicycle",
+                                "Commute - Walk",
+                                "Commute - Other Means",
+                                "Commute - Work from Home",
+                                "Household Income - Less than $10,000",
+                                "Household Income - $10,000 - $14,999",
+                                "Household Income - $15,000 - $19,999",
+                                "Household Income - $20,000 - $24,999",
+                                "Household Income - $25,000 - $29,999",
+                                "Household Income - $30,000 - $34,999",
+                                "Household Income - $35,000 - $39,999",
+                                "Household Income - $40,000 - $44,999",
+                                "Household Income - $45,000 - $49,999",
+                                "Household Income - $50,000 - $59,999",
+                                "Household Income - $60,000 - $74,999",
+                                "Household Income - $75,000 - $99,999",
+                                "Household Income - $100,000 - $124,999",
+                                "Household Income - $125,000 - $149,999",
+                                "Household Income - $150,000 - $199,999",
+                                "Household Income - $200,000 or More")
+
+colnames(neighborhood_touches) <- neighborhood_touches_names
 
 datatable(neighborhood_touches,
           options = list(
@@ -426,8 +428,30 @@ datatable(neighborhood_touches,
           )
 )
 ```
+
+```{r, echo=FALSE}
+neighborhood_transposed <- neighborhood_touches %>%
+  group_by(Neighborhood) %>%
+  select_if(is.numeric) %>%
+  select(-Profile) %>%
+  summarise_all(mean) %>%
+  t(.) %>%
+  as.tibble()
+
+colnames(neighborhood_transposed) <- neighborhood_transposed[1, ]
+neighborhood_transposed <- neighborhood_transposed[-1, ]
+neighborhood_transposed <- neighborhood_transposed %>%
+  mutate_all(as.numeric) %>%
+  round(., 3)
+
+datatable(neighborhood_transposed,
+          options = list(
+            scrollX = TRUE
+          ))
+```
+
 ##Profile 1
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 1,],
@@ -440,7 +464,7 @@ leaflet() %>%
 ```
 
 ##Profile 2
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 2,],
@@ -453,7 +477,7 @@ leaflet() %>%
 ```
 
 ##Profile 3
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 3,],
@@ -466,7 +490,7 @@ leaflet() %>%
 ```
 
 ##Profile 4
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 4,],
@@ -479,7 +503,7 @@ leaflet() %>%
 ```
 
 #Profile 5
-```{r}
+```{r, warning=FALSE, echo=FALSE}
 leaflet() %>%
   addTiles() %>%
   addPolygons(data = block_shapes_profile[block_shapes_profile$Profile == 5,],
