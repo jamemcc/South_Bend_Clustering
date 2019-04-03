@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, warning=FALSE, echo=FALSE, message=FALSE}
 setwd("~/GitHub/DS-Now-Final-Project/Final Deliverables")
 
 library(tidycensus)
@@ -24,13 +24,15 @@ load("cluster data for analysis.RData")
 load("census_shapefiles.RData")
 ```
 
-```{r}
+```{r, echo=FALSE, message=FALSE, results='hide'}
 neighborhoods <- readOGR("./South_Bend_Active_Neighborhoods_Map",
                          layer = "Neighborhood_Boundaries-polygon",
                          stringsAsFactors = F)
-```
 
-```{r}
+neighborhoods$Name <- str_remove_all(neighborhoods$Name, "Â")
+```
+#County Wide Data
+```{r, echo=FALSE, warning=FALSE}
 block_shapes_profile <- block_shapes %>%
   inner_join(minus_margins_block, by = "NAME") %>%
   select(NAME, `Block Group`, `Census Tract`,
@@ -99,21 +101,21 @@ leaflet() %>%
                    position = "topleft")
 ```
 
-```{r}
+```{r, echo=FALSE}
 transposed_center_block <- as.data.frame(t(unscaled_centers_block))
 colnames(transposed_center_block) <- paste0("Profile ", 1:5)
 transposed_center_block <- round(transposed_center_block, 2)
 transposed_center_block <- transposed_center_block[-1, ]
-rownames(transposed_center_block) <- c("Total Population",
-                                       "Total Housing Units",
-                                       "Total Occupied Housing Units",
-                                       "Total Vacant Housing Units",
-                                       "Total Owner-Occupied Units",
-                                       "Total Renter-Occupied Units",
-                                       "Total Units for Rent",
-                                       "Total Rented, Non-Occupied Units",
-                                       "Total Units for Sale",
-                                       "Total Sold, Non-Occupied Units",
+rownames(transposed_center_block) <- c("Average Population",
+                                       "Average Housing Units",
+                                       "Average Occupied Housing Units",
+                                       "Average Vacant Housing Units",
+                                       "Average Owner-Occupied Units",
+                                       "Average Renter-Occupied Units",
+                                       "Average Units for Rent",
+                                       "Average Rented, Non-Occupied Units",
+                                       "Average Units for Sale",
+                                       "Average Sold, Non-Occupied Units",
                                        "25th Percentile Home Value",
                                        "50th Percentile Home Value",
                                        "75th Percentile Home Value",
@@ -122,17 +124,17 @@ rownames(transposed_center_block) <- c("Total Population",
                                        "Median Owner Cost/Income - Mortgage",
                                        "Median Owner Cost/Income - No Mortgage",
                                        "Median Family Income",
-                                       "Total White Population",
-                                       "Total Black Population",
-                                       "Total Native American Population",
-                                       "Total Asian Population",
-                                       "Total Pacific Islander Population",
-                                       "Total Other Population",
-                                       "Total Two or More Races Population",
+                                       "Average White Population",
+                                       "Average Black Population",
+                                       "Average Native American Population",
+                                       "Average Asian Population",
+                                       "Average Pacific Islander Population",
+                                       "Average Other Population",
+                                       "Average Two or More Races Population",
                                        "Median Age",
                                        "Median Age - Male",
                                        "Median Age - Female",
-                                       "Total Households",
+                                       "Average Households",
                                        "Family Households",
                                        "Family Households - Married",
                                        "Family Households - Other",
@@ -152,7 +154,7 @@ rownames(transposed_center_block) <- c("Total Population",
                                        "5 Person Non-families",
                                        "6 Person Non-families",
                                        "7 or More Person Non-families",
-                                       "Total Labor Force",
+                                       "Average Labor Force",
                                        "Civilian Labor Force",
                                        "Civilian Labor Force - Employed",
                                        "Civilian Labor Force - Unemployed",
@@ -244,33 +246,186 @@ rownames(transposed_center_block) <- c("Total Population",
                                        "Empolyed - 5 Vehicles Available")
 ```
 
-```{r}
+```{r, echo=FALSE}
 datatable(transposed_center_block)
 ```
 
 ```{r}
+spatial_block_shapes <- sf::as_Spatial(block_shapes_profile,
+                                       IDs = block_shapes_profile$NAME)
+
+proj4string(spatial_block_shapes) <- proj4string(neighborhoods)
+
 overlap_matrix <- gOverlaps(neighborhoods,
-                            sf::as_Spatial(block_shapes_profile,
-                                           IDs = block_shapes_profile$NAME),
+                            spatial_block_shapes,
                             byid = T)
 touches_matrix <- gTouches(neighborhoods,
-                            sf::as_Spatial(block_shapes_profile,
-                                           IDs = block_shapes_profile$NAME),
-                            byid = T)
+                           spatial_block_shapes,
+                           byid = T)
+
+contains_matrix <- gContains(neighborhoods,
+                             spatial_block_shapes,
+                             byid = T)
+
+crosses_matrix <- gCrosses(neighborhoods,
+                           spatial_block_shapes,
+                           byid = T)
+
+index_matrix <- touches_matrix | overlap_matrix | contains_matrix | crosses_matrix
+
+imputed_block$`Block Group` <- str_remove(imputed_block$`Block Group`,
+                                          "Block Group ")
+
+imputed_block$`Census Tract` <- str_remove(imputed_block$`Census Tract`,
+                                           "Census Tract ")
 
 block_tibble <- as.tibble(block_shapes_profile) %>%
   select(-geometry, name_popup)
 
-neighborhood_touches <- list()
+neighborhood_touches <- NULL
 
 for (i in 1:length(neighborhoods$Name)) {
-  neighborhood_touches[[i]] <- block_tibble[touches_matrix[, i], ]
+  new_neighborhood <- block_tibble[index_matrix[, 3], ] %>%
+    inner_join(imputed_block, by = c("Block Group", "Census Tract"))
+  
+  if(nrow(new_neighborhood) > 0) {
+    new_neighborhood$Neighborhood <- neighborhoods$Name[2]
+    
+    neighborhood_touches <- bind_rows(neighborhood_touches, new_neighborhood)
+  }
 }
-
-names(neighborhood_touches) <- neighborhoods$Name
 
 ```
 
+```{r}
+neighborhood_touches <- neighborhood_touches %>%
+  select(-NAME, -name_popup) %>%
+  select(Neighborhood, Profile = cluster, everything())
+
+colnames(neighborhood_touches) <- c("Neighborhood",
+                                    "Block Group",
+                                    "Census Tract",
+                                    "Profile",
+                                    "Total Population",
+                                    "Total Housing Units",
+                                    "Total Occupied Housing Units",
+                                    "Total Vacant Housing Units",
+                                    "Total Owner-Occupied Units",
+                                    "Total Renter-Occupied Units",
+                                    "Total Units for Rent",
+                                    "Total Rented, Non-Occupied Units",
+                                    "Total Units for Sale",
+                                    "Total Sold, Non-Occupied Units",
+                                    "25th Percentile Home Value",
+                                    "50th Percentile Home Value",
+                                    "75th Percentile Home Value",
+                                    "Median Owner Cost - Mortgage",
+                                    "Median Owner Cost - No Mortgage",
+                                    "Median Owner Cost/Income - Mortgage",
+                                    "Median Owner Cost/Income - No Mortgage",
+                                    "Median Family Income",
+                                    "Total White Population",
+                                    "Total Black Population",
+                                    "Total Native American Population",
+                                    "Total Asian Population",
+                                    "Total Pacific Islander Population",
+                                    "Total Other Population",
+                                    "Total Two or More Races Population",
+                                    "Median Age",
+                                    "Median Age - Male",
+                                    "Median Age - Female",
+                                    "Total Households",
+                                    "Family Households",
+                                    "Family Households - Married",
+                                    "Family Households - Other",
+                                    "Non-family Households",
+                                    "Non-family Households - Alone",
+                                    "Non-family Households - Not Alone",
+                                    "Two Person Families",
+                                    "Three Person Families",
+                                    "Four Person Families",
+                                    "Five Person Families",
+                                    "Six Person Families",
+                                    "7 or More Person Families",
+                                    "1 Person Non-families",
+                                    "2 Person Non-families",
+                                    "3 Person Non-families",
+                                    "4 Person Non-families",
+                                    "5 Person Non-families",
+                                    "6 Person Non-families",
+                                    "7 or More Person Non-families",
+                                    "Average Labor Force",
+                                    "Civilian Labor Force",
+                                    "Civilian Labor Force - Employed",
+                                    "Civilian Labor Force - Unemployed",
+                                    "Military Labor Force",
+                                    "Non-Labor Force",
+                                    "Education - No Schooling",
+                                    "Education - Nursery School",
+                                    "Education - Kindergarten",
+                                    "Education - First Grade",
+                                    "Education - Second Grade",
+                                    "Education - Third Grade",
+                                    "Education - Fourth Grade",
+                                    "Education - Fifth Grade",
+                                    "Education - Sixth Grade",
+                                    "Education - Seventh Grade",
+                                    "Education - Eighth Grade",
+                                    "Education - Ninth Grade",
+                                    "Education - Tenth Grade",
+                                    "Education - Eleventh Grade",
+                                    "Education - Twelfth Grade - No Diploma",
+                                    "Education - High School Diploma",
+                                    "Education - GED or Alternative",
+                                    "Education - Less Than 1 Year College",
+                                    "Education - More Than 1 Year Collage - No Degree",
+                                    "Education - Associates Degree",
+                                    "Education - Bachelors Degree",
+                                    "Education - Masters Degree",
+                                    "Education - Professional School Degree",
+                                    "Education - Doctorate Degree",
+                                    "Commute - Car, Truck or Van",
+                                    "Commute - Drive Alone",
+                                    "Commute - Carpool",
+                                    "Commute - 2 Person Carpool",
+                                    "Commute - 3 Person Carpool",
+                                    "Commute - 4 Person Carpool",
+                                    "Commute - 5 or 6 Person Carpool",
+                                    "Commute - 7 or More Person Carpool",
+                                    "Commute - Public Transportation",
+                                    "Commute - Bus or Trolley",
+                                    "Commute - Subway or Elevated Train",
+                                    "Commute - Railroad Train",
+                                    "Commute - Ferry Boat",
+                                    "Commute - Taxi",
+                                    "Commute - Motorcycle",
+                                    "Commute - Bicycle",
+                                    "Commute - Walk",
+                                    "Commute - Other Means",
+                                    "Commute - Work from Home",
+                                    "Household Income - Less than $10,000",
+                                    "Household Income - $10,000 - $14,999",
+                                    "Household Income - $15,000 - $19,999",
+                                    "Household Income - $20,000 - $24,999",
+                                    "Household Income - $25,000 - $29,999",
+                                    "Household Income - $30,000 - $34,999",
+                                    "Household Income - $35,000 - $39,999",
+                                    "Household Income - $40,000 - $44,999",
+                                    "Household Income - $45,000 - $49,999",
+                                    "Household Income - $50,000 - $59,999",
+                                    "Household Income - $60,000 - $74,999",
+                                    "Household Income - $75,000 - $99,999",
+                                    "Household Income - $100,000 - $124,999",
+                                    "Household Income - $125,000 - $149,999",
+                                    "Household Income - $150,000 - $199,999",
+                                    "Household Income - $200,000 or More")
+
+datatable(neighborhood_touches,
+          options = list(
+            scrollX = T
+          )
+)
+```
 ##Profile 1
 ```{r}
 leaflet() %>%
