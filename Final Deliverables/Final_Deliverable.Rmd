@@ -30,6 +30,10 @@ neighborhoods <- readOGR("./South_Bend_Active_Neighborhoods_Map",
                          stringsAsFactors = F)
 
 neighborhoods$Name <- str_remove_all(neighborhoods$Name, "Â")
+
+city_limits <- readOGR("./South_Bend_Active_Neighborhoods_Map",
+                         layer = "City_Limits",
+                         stringsAsFactors = F)
 ```
 #County Wide Data
 ```{r, echo=FALSE, warning=FALSE}
@@ -86,6 +90,12 @@ leaflet() %>%
               opacity = 1,
               popup = ~name_popup,
               group = "Profile 5") %>%
+    addPolygons(data = city_limits,
+              color = "black",
+              fillOpacity = 0,
+              opacity = 1,
+              weight = 2,
+              group = "City Limits") %>%
   addPolygons(data = neighborhoods,
               color = "black",
               fillOpacity = .4,
@@ -96,7 +106,8 @@ leaflet() %>%
   addLegend(pal = profile_block_pal,
             values = block_shapes_profile$Profile) %>%
   addLayersControl(overlayGroups = c("Profile 1", "Profile 2", "Profile 3",
-                                     "Profile 4", "Profile 5", "Neighborhoods"),
+                                     "Profile 4", "Profile 5", "Neighborhoods",
+                                     "City Limits"),
                    options = layersControlOptions(collapsed = FALSE),
                    position = "topleft")
 ```
@@ -443,6 +454,10 @@ neighborhood_transposed <- neighborhood_transposed[-1, ]
 neighborhood_transposed <- neighborhood_transposed %>%
   mutate_all(as.numeric) %>%
   round(., 3)
+
+rownames(neighborhood_transposed) <- str_replace_all(colnames(neighborhood_touches)[-c(1:4)],
+                                                     "Total",
+                                                     "Average")
 
 datatable(neighborhood_transposed,
           options = list(
