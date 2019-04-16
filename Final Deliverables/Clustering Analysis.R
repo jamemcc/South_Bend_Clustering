@@ -192,3 +192,24 @@ save(unscaled_centers_block, unscaled_centers_tract,
 
 #Save all the data, just in case
 save.image("clustering_total_work.RData")
+
+### Get distances from each observation to the cluster mean (centroid) and save
+# Combine pca values with cluster ID and GEOID
+pca_clusters <- data.frame(cluster = kmeans_five_block$cluster,
+                           GEOID = minus_margins_block$GEOID,
+                           pca_block$x,
+                           stringsAsFactors = F)
+
+# Find distance from center of each cluster
+distance_list = list()
+for(cluster in 1:5){
+  # Combine cluster center with all block groups from that cluster
+  cluster_mask <- pca_clusters$cluster == cluster
+  temp_cluster_with_center <- rbind(as.data.frame(kmeans_five_block$centers)[cluster,], 
+                                    pca_clusters[cluster_mask, -c(1:2)])
+  distance_list[[cluster]] <- data.frame(GEOID = pca_clusters[cluster_mask, 'GEOID'], 
+                                         distance = as.matrix(dist(temp_cluster_with_center))[-1,1])
+}
+# Save data
+cluster_distances <- rbind_list(distance_list)
+save(cluster_distances, file = "cluster_distances.Rdata")
