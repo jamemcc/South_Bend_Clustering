@@ -645,9 +645,6 @@ First, a map of the neighborhoods is created for reference.
 #Please update if adopted by South Bend city employees, as I will be billed (Joe Kosteck)
 register_google(key = "AIzaSyCWV1S0fxPTZQ1mwvIcNDdKLsz7VVqdQss")
 
-Sys.setenv(http_proxy='http://one.proxy.att.com:8080')
-Sys.setenv(https_proxy='http://one.proxy.att.com:8080')
-
 #Get a map of South Bend (static map)
 st_joes_map <- get_map("South Bend, Indiana", zoom = 12)
 
@@ -986,8 +983,10 @@ Relative to St. Joseph County, Profile 1 is characterized by:
 *	Much lower percentage of family households (40% vs 64%)
 *	Higher labor force participation rate (55% vs 50%)
 
-Notable Block Groups: 
-Block Group 2, Census Tract 115.05 is the best representation of Profile 1 due to a low median age (30.5 years), higher home values ($162,800 median home value), and the percentage of family households (40% of family households). 
+Notable Block Groups:
+
+Block Group 2, Census Tract 115.05 is the best representation of Profile 1 due to a low median age (30.5 years), higher home values ($162,800 median home value), and the percentage of family households (40% of family households).
+
 Block Group 3, Census Tract 113.01 the most distinct block group of Profile 1 due to a very low median age (25.7 years), a low number of people per housing unit (.98), a very low percentage of family households (19%) and higher rental costs ($883). 
 
 ##Profile 2
@@ -1031,8 +1030,10 @@ Relative to St. Joseph County, Profile 2 is characterized by:
 
 Based on these observations, Profile 2 can be described as block groups with higher home values, more people per home, and whose inhabitants own their own homes, have higher incomes, and tend to have families. 
 
-Notable Block Groups: 
+Notable Block Groups:
+
 Block Group 1, Census Tract 113.04 is the best representation of Profile 2 due to a higher median family income ($121,616), a higher percentage of owner-occupied housing units (94%), a higher percentage of family households (78.8%), and its higher median age (49.2 years old).
+
 Block Group 1, Census Tract 113.05 is the most distinct block group of Profile 2 due to a lower median home value ($199,700), lower median family income ($120,179), and a higher percentage of family households (86%). 
 
 ##Profile 3
@@ -1066,9 +1067,12 @@ Relative to St. Joseph County, Profile 3 is characterized by:
 
 Based on these observations, Profile 3 can be described as block groups that are representative of St. Joseph County as a whole, albeit with a slightly older population that is more likely to own their homes and has a higher proportion of White residents. 
 
-Notable Block Groups: 
-Block Group 1, Census Tract 12 is best representative of Profile 3 due to due to a higher median home value ($120,100), a median family income ($64,500) consistent with the rest of Profile 3, percentage of owner-occupied homes (91%), percentage of White residents (86%), and percentage of family households (64%). 
-Block Group 3, Census Tract 10 is a distinct block group in Profile 3 due to lower home values (median value of $33,000), higher rental costs ($904), a lower percentage of owner-occupied housing units (11%), and a lower percentage of family households (14%), and a lower percentage of White people (77%). 
+Notable Block Groups:
+
+Block Group 1, Census Tract 12 is best representative of Profile 3 due to due to a higher median home value ($120,100), a median family income ($64,500) consistent with the rest of Profile 3, percentage of owner-occupied homes (91%), percentage of White residents (86%), and percentage of family households (64%).
+
+Block Group 3, Census Tract 10 is a distinct block group in Profile 3 due to lower home values (median value of $33,000), higher rental costs ($904), a lower percentage of owner-occupied housing units (11%), and a lower percentage of family households (14%), and a lower percentage of White people (77%).
+
 Block Group 1, Census Tract 7 is a distinct block group in Profile 3 due to lower home values (median home value of $73,600), a lower median age (34.8 years), a higher percentage of Black residents, and a higher percentage of vacant units (21%). 
 
 
@@ -1107,7 +1111,8 @@ Relative to St. Joseph County, Profile 4 is characterized by:
 
 Based on these observations, Profile 4 can be described as block groups with lower home values, lower home ownership costs with a mortgage, slightly lower rental costs, and much lower family incomes. The population of Profile 4 tends to be younger, contains a higher percentage of Black residents, a lower percentage of White residents, and is more likely to be unemployed. 
 
-Notable Block Groups: 
+Notable Block Groups:
+
 Block Group 1, Census Tract 29 is best representative in Profile 4 due to lower home values (median home value of $54,600), lower rental costs ($658), a lower median age (29.1), a lower percentage of occupied housing units (77.9%), a high unemployment rate (89%). However, this block group is not representative of Profile 4 due to its higher percentage of families (82%) and a very high percentage of Black people (52%).
 
 Block Group 1, Census Tract 27 is an extreme representation of Profile 4 due to a lower median age (30.2 years), lower home values (median home value of $41,200), lower family incomes ($32,0310, a lower percentage of occupied housing units (43%), a high unemployment rate (18%). This block group also has a higher percentage of family households (72%) and a higher rental costs ($754).
@@ -1154,7 +1159,8 @@ Relative to St. Joseph County, Profile 5 is characterized by:
 
 Based on these observations, Profile 4 can be described as block groups with higher home values and correspondingly higher home ownership costs with a mortgage, higher rental costs, and slightly more occupants per home whose inhabitants are more likely to own their homes. The population of Profile 5 tends to be older, with higher proportion of White residents, and a higher percentage of family households. 
 
-Notable Block Groups: 
+Notable Block Groups:
+
 Block Group 2, Census Tract 113.05 is representative of Profile 5 due to a higher median home value ($146,300), higher rental costs ($1,304), an older median age (44 years), more people per housing unit (2.66), a higher percentage of white people (85%), and a higher percentage of family households (75%).
 
 Block Group 4, Census Tract 109 is an extreme representation of Profile 5 due to a higher median home value ($177,700), higher median age (46.3 years), and a higher percentage of owner-occupied housing units (91%). 
