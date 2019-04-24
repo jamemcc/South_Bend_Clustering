@@ -23,6 +23,8 @@ There are two main data sources included in this analysis:
     + Data available at varying granularities, although some data at smaller geography levels is missing for South Bend
 
 ```{r, warning=FALSE, message=FALSE, echo=FALSE}
+setwd("~/GitHub/South_Bend_Clustering")
+
 library(tidycensus)
 library(tidyverse)
 library(ggmap)
@@ -98,7 +100,7 @@ stJoesBlockGroup <- sf::st_transform(stJoesBlockGroup, 4326)
 ```
 
 ```{r, eval=FALSE, echo=FALSE}
-zillowNeighborhoods <- readOGR(dsn = "C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources",
+zillowNeighborhoods <- readOGR(dsn = "../Data Sources",
                                layer = "ZillowNeighborhoods-IN",
                                stringsAsFactors = F)
 ```
@@ -108,11 +110,11 @@ stJoesZillow <- zillowNeighborhoods[zillowNeighborhoods$County == "Saint Joseph"
 ````
 
 ```{r, eval=FALSE, echo=FALSE}
-save.image("EDA Data.RData")
+save.image("../EDA/EDA Data.RData")
 ```
 
 ```{r, echo=FALSE}
-load("EDA Data.RData")
+load("../EDA/EDA Data.RData")
 ```
 
 ##Boundaries
@@ -327,7 +329,7 @@ rm(rentBedrooms)
 ##Zillow Time Series Data
 Next, we'll look at time series data from Zillow.
 ```{r, message=FALSE, echo=FALSE}
-neighborhoodRent <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/Neighborhood Rent Prices-Zillow.csv",
+neighborhoodRent <- read.csv("../Data Sources/Neighborhood Rent Prices-Zillow.csv",
                              stringsAsFactors = F) %>%
   filter(State == "IN") %>%
   filter(CountyName == "Saint Joseph County")
@@ -389,7 +391,7 @@ ggplot(
 ```
 
 ```{r, echo=FALSE}
-homeValueIndex <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/Zillow Home Value Index - All Homes.csv",
+homeValueIndex <- read.csv("../Data Sources/Zillow Home Value Index - All Homes.csv",
                            stringsAsFactors = F) %>%
   filter(State == "IN") %>%
   filter(CountyName == "Saint Joseph County")
@@ -419,7 +421,7 @@ ggplot(
 ```
 
 ```{r, echo=FALSE}
-homeSales <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/Sale_Counts_Seas_Adj_City.csv",
+homeSales <- read.csv("../Data Sources/Sale_Counts_Seas_Adj_City.csv",
                            stringsAsFactors = F) %>%
   filter(StateName == "Indiana") %>%
   filter(RegionName == "South Bend")
@@ -452,17 +454,17 @@ ggplot(
 ```
 
 ```{r, echo=FALSE}
-bottomTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/City/City_Zhvi_BottomTier.csv",
+bottomTier <- read.csv("../Data Sources/City/City_Zhvi_BottomTier.csv",
          stringsAsFactors = F) %>%
   filter(State == "IN") %>%
   filter(Metro == "South Bend-Mishawaka")
 
-middleTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/City/City_Zhvi_MiddleTier.csv",
+middleTier <- read.csv("../Data Sources/City/City_Zhvi_MiddleTier.csv",
          stringsAsFactors = F) %>%
   filter(State == "IN") %>%
   filter(Metro == "South Bend-Mishawaka")
 
-topTier <- read.csv("C:/Users/kost1/Documents/GitHub/DS-Now-Final-Project/Data Sources/City/City_Zhvi_TopTier.csv",
+topTier <- read.csv("../Data Sources/City/City_Zhvi_TopTier.csv",
          stringsAsFactors = F) %>%
   filter(State == "IN") %>%
   filter(Metro == "South Bend-Mishawaka")
