@@ -562,7 +562,7 @@ Next, geospatial analysis is conducted to find Block Groups that overlap with th
 First, a map of the neighborhoods is created for reference.
 
 ```{r, echo=FALSE, message=FALSE}
-register_google(key = "AIzaSyCWV1S0fxPTZQ1mwvIcNDdKLsz7VVqdQss")
+register_google(key = "###################")
 st_joes_map <- get_map("South Bend, Indiana", zoom = 12)
 
 neighborhoods_sf <- fortify(neighborhoods)
