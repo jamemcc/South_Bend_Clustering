@@ -5,33 +5,36 @@ setwd("~/GitHub/DS-Now-Final-Project/Final Deliverables")
 library(dplyr)
 library(tidycensus)
 library(stringr)
-
+library(censusapi)
+#key we got via subscribing and via e-mail
+mycensuskey <- "f0f9309c1ef0bc76f2953151b46a7a4c2f65dde6"
+#census_api_key(mycensuskey,install = TRUE) - seems this was a 1 time only need
 #Fetch the shapefiles for the tracts and block groups
-st_joes_tract_shapes <- get_acs(
+CoS_tract_shapes <- get_acs(
   geography = "tract",
   variables = "B01003_001",
   state = "IN",
   county = "St. Joseph County",
   output = "wide",
-  geometry = TRUE
+  geometry = TRUE, key=mycensuskey
 )
 
 #Now for the block groups
-st_joes_block_shapes <- get_acs(
+CoS_block_shapes <- get_acs(
   geography = "block group",
   variables = "B01003_001",
   state = "IN",
   county = "St. Joseph County",
   output = "wide",
-  geometry = TRUE
+  geometry = FALSE, key=mycensuskey   # Note needed to set this to False to avoid error/missing layer in 2018 data but now no actual geography in the data
 )
 
 #Select only the relevant variables for the shape files
-block_shapes <- st_joes_block_shapes %>%
+block_shapes <- CoS_block_shapes %>%
   select(NAME, geometry)
 
 #Select only the relevant variables for the shape files
-tract_shapes <- st_joes_tract_shapes %>%
+tract_shapes <- CoS_tract_shapes %>%
   select(NAME, geometry)
 
 #Save the shape files for future use
@@ -42,6 +45,7 @@ rm(list = ls())
 
 #Load the list of all available variables
 acs_17_variables <- load_variables(2017, "acs5", cache = TRUE)
+acs_18_variables <- load_variables(2018, "acs5", cache = TRUE)
 
 #Define the list of variables that will be used in this analysis
 census_vars <- c(
@@ -187,7 +191,7 @@ census_vars <- c(
 
 #Bind the variables that we will pull to the full list of variables
 pulled_vars <- data.frame(census_vars, stringsAsFactors = F) %>%
-  inner_join(acs_17_variables, by = c("census_vars" = "name"))
+  inner_join(acs_18_variables, by = c("census_vars" = "name"))
 
 #Create a new column for the variable name
 #As it appears in the analysis
@@ -201,55 +205,60 @@ pulled_vars <- pulled_vars %>%
 write.csv(pulled_vars, "Analysis Variables.csv", row.names = F)
 
 #Use the variable names to pull data from the census bureau
-st_joes_tract <- get_acs(
+CoS_tract <- get_acs(
   geography = "tract",
   variables = census_vars,
   state = "IN",
   county = "St. Joseph County",
+  place = 71000,
   output = "wide",
   geometry = FALSE
 )
 
-#Use the variable names to pull data from the census bureau
-st_joes_block <- get_acs(
+CoS_block <- get_acs(
   geography = "block group",
   variables = census_vars,
   state = "IN",
   county = "St. Joseph County",
+  place = 71000,
   output = "wide",
   geometry = FALSE
 )
 
 #Split NAME into separate columns
-st_joes_block$`Block Group` <- apply(st_joes_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][1]})
-st_joes_block$`Census Tract` <- apply(st_joes_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][2]})
-st_joes_block$County <- apply(st_joes_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][3]})
-st_joes_block$State <- apply(st_joes_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][4]})
+CoS_block$`Block Group` <- apply(CoS_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][1]})
+CoS_block$`Census Tract` <- apply(CoS_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][2]})
+CoS_block$County <- apply(CoS_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][3]})
+CoS_block$State <- apply(CoS_block[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][4]})
 
 #Split NAME into separate columns
-st_joes_tract$`Census Tract` <- apply(st_joes_tract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][1]})
-st_joes_tract$County <- apply(st_joes_tract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][2]})
-st_joes_tract$State <- apply(st_joes_tract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][3]})
+CoS_tract$`Census Tract` <- apply(CoS_tract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][1]})
+CoS_tract$County <- apply(CoS_tract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][2]})
+CoS_tract$State <- apply(CoS_tract[, 'NAME'], 1, function(x){str_split(x, pattern = ", ")[[1]][3]})
 
 #Save census data for future analysis
-save(st_joes_tract, st_joes_block, file = "census_data.RData")
+save(CoS_tract, CoS_block, file = "census_data.RData")
 
+# Below commented out since we may use the Margin of Error to add valididity or doubt to our analysis
 #Get rid of the margin of error columns, also put columns in correct order
-st_joes_tract_csv <- st_joes_tract %>%
-  select(`Census Tract`, County, State, everything()) %>%
-  select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
+CoS_tract_csv <- CoS_tract %>%
+  select(`Census Tract`, County, State, everything()) #%>%
+#  select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
 
 #Make the column names readable
-colnames(st_joes_tract_csv)[4:ncol(st_joes_tract_csv)] <- names(census_vars)
+colnames(CoS_tract_csv)[4:ncol(CoS_tract_csv)] <- names(census_vars)
 
+# Below commented out since we may use the Margin of Error to add valididity or doubt to our analysis
+
+# Below commented out since we may use the Margin of Error to add valididity or doubt to our analysis
 #Get rid of the margin of error columns, also put columns in correct order
-st_joes_block_csv <- st_joes_block %>%
-  select(`Block Group`, `Census Tract`, County, State, everything()) %>%
-  select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
+CoS_block_csv <- CoS_block %>%
+  select(`Block Group`, `Census Tract`, County, State, everything()) #%>%
+#  select(-ends_with('M', ignore.case = F), -GEOID, -NAME)
 
 #Make the column names readable
-colnames(st_joes_block_csv)[5:ncol(st_joes_block_csv)] <- names(census_vars)
+colnames(CoS_block_csv)[5:ncol(CoS_block_csv)] <- names(census_vars)
 
 #Write the variables to a csv file
-write.csv(st_joes_tract_csv, "St. Joes Tract Data.csv", row.names = F)
-write.csv(st_joes_block_csv, "St Joes Block Group Data.csv", row.names = F)
+write.csv(CoS_tract_csv, "CoS Tract Data.csv", row.names = F)
+write.csv(CoS_block_csv, "CoS Block Group Data.csv", row.names = F)
